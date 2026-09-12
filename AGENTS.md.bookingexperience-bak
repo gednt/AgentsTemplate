@@ -1,0 +1,34 @@
+<!-- bmad:context -->
+<!-- Verified 2026-09-05 against fcfdcc7. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
+
+## BookingExperience
+
+Sistema de agendamento de visitas construído com ASP.NET Core, React e SQL Server. O projeto está em planejamento; a arquitetura vinculante está em `_bmad-output/planning-artifacts/architecture/architecture-BookingExperience-2026-09-05/ARCHITECTURE-SPINE.md`.
+
+## Policy
+
+- Para qualquer implementação, correção ou refatoração, escolha uma tarefa em minúsculas e com hífens e resolva o caminho `.worktrees/<tarefa>` abaixo de `.worktrees` antes de qualquer ação Git. Antes de criar a branch ou a worktree, use somente consultas Git de leitura para confirmar que `feat/<tarefa>` e o caminho ainda não existem. Trabalhe somente nessa Git worktree dedicada; não reutilize uma slug, branch ou worktree existente entre tarefas concorrentes.
+- Execute testes unitários, de integração, API e E2E em contêineres; não use dependências instaladas diretamente no host para substituir o ambiente de teste.
+- Use um nome de projeto Compose exclusivo por worktree e execução. Não use `container_name` nem portas fixas de host nos testes.
+- Em testes isolados, inclusive em caso de falha, preserve o exit code e remova somente os containers, redes, volumes, imagens locais e secrets criados pela execução com `docker compose -f <compose-file> -p <projeto-exclusivo> down --volumes --remove-orphans --rmi local`. No desenvolvimento contínuo, `scripts/Desenvolver.ps1` usa um projeto estável por worktree e faz `down --remove-orphans --rmi local`, preservando somente o volume SQL e a senha local para reproduzir persistência de produção.
+- Nunca execute `docker system prune`, `docker image prune` ou `docker compose down --rmi all`; não remova recursos Docker que não pertençam comprovadamente à execução atual.
+
+## Where things are
+
+- Regras arquiteturais e ownership: `_bmad-output/planning-artifacts/architecture/architecture-BookingExperience-2026-09-05/ARCHITECTURE-SPINE.md`
+- Comunicação para TI: `_bmad-output/planning-artifacts/architecture/architecture-BookingExperience-2026-09-05/DESENHO-SOLUCAO-TI.md`
+
+## Running and verifying
+
+- O runner canônico de testes é `powershell -NoProfile -File .\scripts\Testar.ps1`; ele cria projeto Compose, volumes e secrets efêmeros exclusivos, executa testes unitários, de integração, API e E2E em contêineres e preserva as evidências antes do teardown em `finally`. Seu teardown usa `down --volumes --remove-orphans --rmi local` e apaga explicitamente os arquivos temporários de secrets.
+- Para desenvolvimento contínuo, use `powershell -NoProfile -File .\scripts\Desenvolver.ps1`. Ele cria o `.env` ignorado pelo Git uma única vez, mantém nele a senha SQL local, preserva o volume SQL entre sessões e usa apenas TLS e arquivos de bootstrap efêmeros. O teardown remove contêineres, rede e imagens locais do projeto estável da worktree, mas não usa `--volumes`.
+- Ambos os fluxos removem somente imagens locais construídas pelo projeto; não removem cache BuildKit, imagens compartilhadas/digest-pinned nem autorizam `docker image prune` ou `docker system prune`.
+- Registre a revisão de `main` contra a qual a verificação foi executada. Depois de apresentar a implementação e a verificação, aguarde uma confirmação explícita e distinta do usuário antes de mesclar em `main` ou remover a worktree. Com a confirmação, confira que `main` e a worktree estão limpas e que `main` ainda é a revisão verificada; se mudou, atualize a branch e verifique novamente. Só então faça o merge sem força e remova exclusivamente o caminho validado `.worktrees/<tarefa>` com `git worktree remove`; não altere worktrees não relacionadas.
+- Testes em contêiner não substituem o smoke gate em Windows Server/VM para `win-x64`, Windows Service, DPAPI, Certificate Store e Windows Event Log.
+
+## Conventions that differ from defaults
+
+- Toda tabela própria começa com `agendamento_` e continua em português do Brasil com `snake_case`; os schemas continuam definindo o módulo proprietário.
+- Docker Compose é exclusivo de desenvolvimento e testes. Produção permanece um Windows Service self-contained.
+
+<!-- /bmad:context -->
