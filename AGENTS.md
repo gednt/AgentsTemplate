@@ -56,9 +56,18 @@ There is no build, no test suite, and no local development server. The artifacts
 
 ## Policy
 
-_No project-level policy; see workflow blocks for ceremony._
+### Git worktree rule
 
-The repository has no hard rules beyond what the workflow blocks (none active) and skill overlays (`AGENTS-TEMPLATE.md` and `AGENTS-SPEC.md`) enforce. Downstream projects add their own policy here when they copy the template.
+This repository enforces worktree-only development for both human and AI agents. The rule applies to every change, including edits to the schema, the spec, the canonical skill, the vendor wrappers, and the installers.
+
+- **All Git work happens in a worktree.** Never commit, branch, push, or merge directly on `main`. For any change, create a dedicated Git worktree at `.worktrees/<task>/` on a branch `feat/<task>`, where `<task>` is a semantic, lowercase, hyphen-separated name describing the change.
+- **Pre-flight check before creating a worktree.** Use only read-only Git commands to confirm that the branch `feat/<task>` does not already exist and that the path `.worktrees/<task>/` is not already a worktree. If either exists, abort and pick a different task name.
+- **One task, one worktree, one branch.** Do not reuse a `<task>` slug, a `feat/<task>` branch, or a `.worktrees/<task>/` path between concurrent tasks. The same name may be reused only after the previous worktree is removed and its branch is merged or deleted.
+- **Canonical command.** `git worktree add -b feat/<task> .worktrees/<task> main` is the canonical way to create the worktree; it creates the branch and the path in one step.
+- **Clean up after merge.** After a change merges to `main` and is verified, remove only the worktree you created: `git worktree remove .worktrees/<task>`. Do not touch unrelated worktrees, branches, or paths.
+- **No force-push, no rewriting shared history.** Do not rewrite commits that have been pushed or that other worktrees share. Local-only history rewrites (interactive rebase before push) are allowed when no one else depends on the branch.
+
+The template's recommended form of this rule, plus a "consider adopting" framing, is in `AGENTS-TEMPLATE.md` §Policy. Downstream projects copy the rule verbatim or adapt the branch prefix (`fix/`, `chore/`) to their convention.
 
 ---
 
