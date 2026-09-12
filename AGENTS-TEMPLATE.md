@@ -76,6 +76,17 @@ If the project uses containers for any of the above, name the compose file and t
 
 If the project has **no** hard policy beyond what the workflows enforce, leave this section as a one-line placeholder: `_No project-level policy; see workflow blocks for ceremony._`
 
+The following Git worktree rule is **strongly recommended** for every project that adopts this template. Include it unless the project has a documented reason to diverge (for example, a project that is itself a Git implementation and needs to test worktree internals).
+
+### Git worktree rule (recommended for adoption)
+
+- **All Git work happens in a worktree.** When an agent (AI or human) is making a change, never commit, branch, push, or merge directly on `main`. Create a dedicated Git worktree at `.worktrees/<task>/` on a branch `feat/<task>`, where `<task>` is a semantic, lowercase, hyphen-separated name describing the change (e.g., `add-worktree-policy`, `fix-workflow-block-precedence`).
+- **Pre-flight check before creating a worktree.** Use only read-only Git commands to confirm that the branch `feat/<task>` does not already exist and that the path `.worktrees/<task>/` is not already a worktree. If either exists, abort and pick a different task name.
+- **One task, one worktree, one branch.** Do not reuse a `<task>` slug, a `feat/<task>` branch, or a `.worktrees/<task>/` path between concurrent tasks. The same name may be reused only after the previous worktree is removed and its branch is merged or deleted.
+- **Canonical command.** `git worktree add -b feat/<task> .worktrees/<task> main` is the canonical way to create the worktree; it creates the branch and the path in one step.
+- **Clean up after merge.** After a change merges to `main` and is verified, remove only the worktree you created: `git worktree remove .worktrees/<task>`. Do not touch unrelated worktrees, branches, or paths.
+- **No force-push, no rewriting shared history.** Do not rewrite commits that have been pushed or that other worktrees share. Local-only history rewrites (interactive rebase before push) are allowed when no one else depends on the branch.
+
 ---
 
 ## Workflow blocks
