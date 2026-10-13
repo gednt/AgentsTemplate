@@ -58,31 +58,6 @@ Mandatory Git worktree rules live in [`AGENTS.WORKTREES.md`](AGENTS.WORKTREES.md
 
 ---
 
-## Workflow blocks
-
-No planning or state workflow is run here; all blocks are intentionally empty (inert) and are copy-through starting points for downstream projects.
-
-### BMAD
-
-<!-- owner:bmad -->
-<!-- /owner -->
-
-### GSD-core
-
-<!-- owner:gsd -->
-<!-- /owner -->
-
-### openspec
-
-<!-- owner:openspec -->
-<!-- /owner -->
-
-### Other workflows
-
-To add a new workflow, append a new `### <Workflow name>` subsection here with an `<!-- owner:<workflow-code> --> ... <!-- /owner -->` block, and register the code in `AGENTS-SPEC.md` (see Extension protocol).
-
----
-
 ## Skill overlays
 
 - **AGENTS.WORKTREES** — `AGENTS.WORKTREES.md`. Mandatory Git worktree rule (all Git work in a worktree; human merges on `main`). Load before any commit, branch, or merge.
