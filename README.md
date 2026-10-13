@@ -16,7 +16,7 @@ Every AI coding harness (Claude Code, Cursor, Codex, Gemini CLI, Antigravity, Gi
 
 Concretely the schema introduces:
 
-- **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md`) that an agent reads lazily when its task touches the overlay's domain. All tools and workflows — BMAD, GSD-core, openspec, impeccable — are overlays; none owns a block inside `AGENTS.md`.
+- **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md`) that an agent reads lazily when its task touches the overlay's domain. Adopted tools and workflows — BMAD, GSD-core, openspec, impeccable — integrate as overlays.
 - **Freshness stamps** — `<!-- Last reviewed: YYYY-MM-DD against <reference> -->` markers on sibling specification files that let an agent detect stale context without erroring.
 - **A conformance contract** — a short checklist any `AGENTS.md` must pass to be called conformant.
 

@@ -14,7 +14,7 @@ For the authoritative reader contract — how agents interpret this template, th
 
 1. The root `AGENTS.md` is loaded by every harness on session start. It must be short, self-sufficient for orientation, and name every sibling with a `## Skill overlays` pointer.
 2. Siblings are loaded **on demand** — only when the task touches their domain. The load trigger is written in the sibling's pointer line and reinforced by the sibling's own frontmatter `description`.
-3. Siblings are project-owned specification files. They own nothing in `AGENTS.md` and never hold external tool state.
+3. Siblings are separate documents. The pointer line and the sibling's `description` decide when the agent reads each; nothing from a sibling is pasted into the root, and sibling text is outside the root's session load.
 4. A sibling may cross-reference another sibling by path (`AGENTS.WORKTREES.md`), but must remain interpretable on its own.
 
 The split is **lossless by construction**: the root keeps one headline line per rule so an agent that never opens a sibling still knows the rule exists and where to find it. Moving a rule family without leaving its headline is a conformance failure, not a shortcut.
@@ -48,8 +48,8 @@ load them only when the task touches that domain.
 
 An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
 
-1. Treat sections not pointed to from `## Skill overlays` as **project-owned**: their content is binding for this repository and the agent obeys it.
-2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly, lazily, only when the task touches the overlay's domain; no sibling owns anything in `AGENTS.md`.
+1. Treat the content of every section as a binding instruction for this repository — the agent obeys it.
+2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those files directly, lazily, only when the task touches the overlay's domain.
 3. Treat the schema header (`<!-- agents-template-schema 2 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
 
 ---
@@ -63,9 +63,9 @@ An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
 ## Repo anatomy
 
 <orientation. List the top-level layout, and include one line naming the
-AGENTS.* sibling files as project-owned specification files.>
+AGENTS.* sibling files.>
 
-- `AGENTS.POLICY.md` / `AGENTS.STACK.md` / `AGENTS.WORKTREES.md` — project-owned sibling specification files; see `## Skill overlays` for when to load each.
+- `AGENTS.POLICY.md` / `AGENTS.STACK.md` / `AGENTS.WORKTREES.md` — sibling specification files; see `## Skill overlays` for when to load each.
 
 ---
 
@@ -94,7 +94,7 @@ write instead: _No project-level policy; see the skill overlays for scope._
 
 Load only when the task touches the overlay's domain.
 
-- **AGENTS.POLICY** — `AGENTS.POLICY.md`. Hard policy (verification gate, per-surface gates, prohibitions, workflow ownership). Load before any non-trivial change.
+- **AGENTS.POLICY** — `AGENTS.POLICY.md`. Hard policy (verification gate, per-surface gates, prohibitions, workflow directories). Load before any non-trivial change.
 - **AGENTS.STACK** — `AGENTS.STACK.md`. Stack identity and per-language conventions. Load before touching code in the corresponding language.
 - **AGENTS.WORKTREES** — `AGENTS.WORKTREES.md`. Git worktree rule and naming ceremony. Load before any commit, branch, or merge.
 - **agents-template** — `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`. Schema authoring. Read when editing `AGENTS.md` structure.
@@ -118,7 +118,7 @@ If no stack sibling exists, replace this section with one subsection per languag
 ## Conventions that differ from defaults
 
 <catch-all for project-wide conventions that don't fit elsewhere. One line
-per convention; details belong in the sibling that owns the domain.>
+per convention; details belong in the sibling for that domain.>
 
 ---
 
@@ -135,7 +135,7 @@ The header/footer markers and the reader contract are the schema-2 contract; a s
 
 `AGENTS.<TOPIC>.md` at the repo root — uppercase topic, dot-separated, sorted adjacent to `AGENTS.md` in every file listing:
 
-- `AGENTS.POLICY.md` — hard rules, verification gates, prohibitions, workflow ownership.
+- `AGENTS.POLICY.md` — hard rules, verification gates, prohibitions, workflow directories.
 - `AGENTS.STACK.md` — stack identity, per-language conventions, agent concurrency rules.
 - `AGENTS.WORKTREES.md` — the Git worktree ceremony, naming conventions, wrapper scripts.
 
@@ -159,7 +159,7 @@ The root file may carry the same frontmatter shape (omit `allowed-tools` where t
 
 ### Review stamp
 
-Directly after the frontmatter, each sibling carries a project-owned review stamp:
+Directly after the frontmatter, each sibling carries a review stamp:
 
 ```html
 <!-- Last reviewed: YYYY-MM-DD against <reference> -->
@@ -173,7 +173,7 @@ Directly after the frontmatter, each sibling carries a project-owned review stam
 
 ```markdown
 ---
-description: "Hard policy: <verification gate>, <per-surface gates>, platform-aware execution, hard prohibitions, workflow ownership. Load before any non-trivial change."
+description: "Hard policy: <verification gate>, <per-surface gates>, platform-aware execution, hard prohibitions, workflow directories. Load before any non-trivial change."
 allowed-tools: [Read, Grep, Glob, Bash(<gate scripts and read-only commands>)]
 mode: primary
 ---
@@ -216,11 +216,11 @@ escalation path. Prefer platform-neutral composition.>
   the reason compressed to a clause (e.g., 'No EF Core — DBTools is the
   only data-access library, per ADR 0002')>
 
-## Workflow ownership (non-overlapping)
+## Workflow directories (non-overlapping)
 
-- **<workflow>** owns `<directory>` — <what it stores there>.
+- **<workflow>** keeps its state in `<directory>` — <what it stores there>.
 
-No workflow may write into another workflow's directory.
+Each workflow keeps its writes inside its own directory.
 ```
 
 ## Sibling template: `AGENTS.STACK.md`
@@ -320,9 +320,9 @@ git worktree add -b feat/<task> .worktrees/feat-<task> main
 
 ---
 
-## Writing your own sibling
+## Adding more siblings
 
-Any domain may earn its own sibling beyond the three above. Follow the formula:
+Any domain may earn a sibling beyond the three above. Follow the formula:
 
 1. Pick the topic word: `AGENTS.<TOPIC>.md`, uppercase, hyphenated if multi-word.
 2. Copy the frontmatter + review stamp block from the templates.

@@ -9,7 +9,7 @@
 1. [Scope](#scope)
 2. [Terminology](#terminology)
 3. [Schema versioning](#schema-versioning)
-4. [Sections and ownership](#sections-and-ownership)
+4. [Sections](#sections)
 5. [Skill overlays](#skill-overlays)
 6. [Onboarding](#onboarding)
 7. [Distribution](#distribution)
@@ -31,8 +31,8 @@ This spec governs:
 
 This spec does **not** govern:
 
-- The internal structure of overlay-owned artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`, `.impeccable/`, etc.). Those are owned by their tools.
-- The internal structure of skill-overlay sibling files (`PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md` content beyond the conventions below). Those are owned by their overlays.
+- The internal layout of overlay artifact directories (`_bmad-output/`, `.planning/`, `openspec/changes/`, `.impeccable/`, etc.).
+- The internal layout of skill-overlay sibling files (`PRODUCT.md`, `DESIGN.md`, and `AGENTS.<TOPIC>.md` content beyond the conventions below).
 - The content of `AGENTS.md` sections — only their structure and interpretation.
 
 ---
@@ -41,8 +41,8 @@ This spec does **not** govern:
 
 - **Agent** — any AI tool that reads `AGENTS.md` to inform its behavior in a repository (Claude Code, Cursor, Codex, GitHub Copilot, Gemini CLI, OpenCode, Hermes, Kiro, and custom harnesses).
 - **Project** — the repository whose `AGENTS.md` is being read.
-- **Skill overlay** — any adopted tool, workflow, or convention system that adds capabilities without owning anything inside `AGENTS.md`. Examples: impeccable (design), BMAD / GSD-core / openspec (planning workflows), formatters, linters.
-- **Sibling specification file** — a project-owned file at the repo root, named `AGENTS.<TOPIC>.md`, that carries the depth for one domain of `AGENTS.md`.
+- **Skill overlay** — an adopted tool, workflow, or convention system integrated through a pointer line in `AGENTS.md` whose sibling files the agent reads lazily. Examples: impeccable (design), BMAD / GSD-core / openspec (planning workflows), formatters, linters.
+- **Sibling specification file** — a file at the repo root, named `AGENTS.<TOPIC>.md`, that carries the depth for one domain of `AGENTS.md`.
 - **Freshness stamp** — an HTML comment that records when a sibling file was last verified against a known-good reference.
 
 ---
@@ -66,7 +66,7 @@ A new minor version (e.g., `2.1`) adds sections or markers in a backward-compati
 
 ---
 
-## Sections and ownership
+## Sections
 
 An `AGENTS.md` written against schema 2 carries the following sections, in order. Sections MAY be omitted; sections in **bold** are recommended.
 
@@ -79,11 +79,11 @@ An `AGENTS.md` written against schema 2 carries the following sections, in order
 7. **Language conventions** — per-language style overrides; one-line pointer or short subsections.
 8. **Conventions that differ from defaults** — catch-all for project-wide conventions.
 
-Ownership is binary:
+Content rules:
 
-- A section not pointed to from `## Skill overlays` is **project-owned**. The agent obeys it as policy for this repository.
-- Everything named in `## Skill overlays` is an overlay: a pointer to one or more sibling files the agent reads lazily. Overlays are pointers only.
-- Adopted tools and workflows (BMAD, GSD-core, openspec, ...) are overlays. They record their state in their own artifact directories and are registered as pointer lines under `## Skill overlays`.
+- Every other section's text is a binding instruction for the repository: the agent obeys it.
+- `## Skill overlays` holds pointer lines to sibling files. The agent reads those files lazily — when the task touches their domain. Overlay siblings extend `AGENTS.md` from the outside; their text is not part of `AGENTS.md`.
+- Adopted tools and workflows (BMAD, GSD-core, openspec, ...) are overlays: their state lives in their own artifact directories, and they appear as pointer lines under `## Skill overlays`.
 
 Section names are case-insensitive but conventionally Title Case (`## Policy`, not `## policy`). An agent encountering an unknown section name ignores it without error.
 
@@ -124,11 +124,11 @@ A downstream project that adopts the schema writes a conformant `AGENTS.md` by r
 - The onboarding skill reads `AGENTS-TEMPLATE.md` and replaces its placeholders with project-specific content. It MUST NOT modify the schema header/footer or the `## Reader contract (minimal)` section.
 - The onboarding skill is **non-destructive**: it MUST archive any existing `AGENTS.md` to `AGENTS.md.<suffix>.bak` before overwriting. The suffix is the project slug (preferred) or a date stamp (fallback).
 - The onboarding skill MUST verify conformance against §Conformance before declaring success. If any check fails, the skill aborts and surfaces the failed checks; it does not write a non-conformant file.
-- The onboarding skill may create the project's own `AGENTS.<TOPIC>.md` sibling specification files (the split template is canonical for this). It MUST NOT write other overlays' artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`); those are the overlays' own onboarding skills' jobs.
-- An adopted workflow is registered as an overlay pointer; the user is told to run the workflow's own onboarding skill if it ships one.
+- The onboarding skill may create the project's `AGENTS.<TOPIC>.md` sibling specification files (the split template is canonical for this). It MUST NOT write other overlays' artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`); those belong to the other overlays' onboarding skills.
+- An adopted workflow is registered as an overlay pointer; the user is told to run the workflow's onboarding skill if it ships one.
 - The onboarding skill is idempotent: re-running it on a project with a conformant `AGENTS.md` is allowed and offers *refresh in place* (default) or *archive and rewrite*.
 
-A project may ship its own onboarding skill under its own overlay. Such a skill MUST honor the same contract. Register the skill in the Supported overlays table by extending the `agents-template` row or adding a new overlay row.
+A project may ship its onboarding skill in a separate overlay. Such a skill MUST honor the same contract. Register the skill in the Supported overlays table by extending the `agents-template` row or adding a new overlay row.
 
 ---
 
@@ -185,7 +185,7 @@ The installer MUST NOT overwrite an existing wrapper without confirmation. It MU
 
 ## Freshness stamps
 
-A **sibling specification file** (`AGENTS.<TOPIC>.md`) carries a project-owned review stamp directly after its frontmatter:
+A **sibling specification file** (`AGENTS.<TOPIC>.md`) carries a review stamp directly after its frontmatter:
 
 - `<!-- Last reviewed: YYYY-MM-DD against <reference> -->` — the sibling's content was last verified against `<reference>` (a constitution document, an ADR index, or a commit SHA) on `<date>`.
 
@@ -204,7 +204,7 @@ When an agent encounters `AGENTS.md` in a repository:
 
 1. Read the file's first 20 lines and the last 5 lines. Locate the `<!-- agents-template-schema N -->` header (one or both should be present). If neither is present, treat the file as **legacy** and apply best-effort interpretation: section names map to their schema-2 counterparts if recognizable.
 2. Read the `## Reader contract (minimal)` section if present. Honor the obligations listed there.
-3. For each section in order: treat it as **project-owned** policy unless it is a pointer line under `## Skill overlays`.
+3. For each section in order: obey its content as repository instruction, except pointer lines under `## Skill overlays`, which name files to read lazily.
 4. Resolve the `## Skill overlays` list. For each pointer, read the referenced file(s) lazily — when the agent's task touches the overlay's domain.
 5. If a sibling file carries a review stamp, check the stamp against the domain's recent changes. If the stamp is stale, surface a soft warning to the user before trusting the sibling's content.
 6. Ignore unknown sections and unknown stamp types. Never error on an unknown construct.
@@ -238,10 +238,10 @@ An agent MUST treat a non-conformant file as a best-effort input: it parses what
 
 ## Change history
 
-- **v1** (initial) — sections-and-ownership model, skill overlays, freshness stamps, extension protocol.
+- **v1** (initial) — the section model, skill overlays, freshness stamps, extension protocol.
 - **v1.1** — added Onboarding section. Overlays may now ship skills (not just point at sibling files); the agents-template overlay is registered with three pointers (template, spec, `agents-init` skill); the conformance pointer check was generalized from "files" to "files or directories."
 - **v1.2** — added Distribution section. Documented the vendor-wrapper convention, the full vendor matrix, and the installer scripts. Added Antigravity to the priority vendor list.
-- **v1.3** — the canonical template became the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped project-owned siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository.
-- **v2** — ownership simplified to two kinds: project-owned content and overlay pointers. Adopted tools and workflows (BMAD, GSD-core, openspec, impeccable) are registered as overlay pointer lines under `## Skill overlays`, with their state kept in their own artifact directories. Freshness stamps are sibling review stamps. Schema marker bumped to `agents-template-schema 2`.
+- **v1.3** — the canonical template became the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository.
+- **v2** — overlay pointers became the single integration point: adopted tools and workflows (BMAD, GSD-core, openspec, impeccable) are registered as pointer lines under `## Skill overlays`, with their state kept in their own artifact directories. Freshness stamps are sibling review stamps. Schema marker bumped to `agents-template-schema 2`.
 
 <!-- agents-spec-schema 2 -->

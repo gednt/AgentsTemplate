@@ -44,11 +44,11 @@ Enumerate the top-level entries (`ls -la` equivalent). For each directory, class
 
 - **Source** — code, configuration, tests, documentation the project authors wrote (`src/`, `lib/`, `tests/`, `docs/`, `internal/`, `cmd/`, `pkg/`).
 - **Generated** — build output, caches, distribution bundles (`dist/`, `build/`, `target/`, `node_modules/`, `.next/`, `coverage/`).
-- **Workflow-owned** — directories that signal an adopted workflow:
+- **Workflow artifact** — directories that signal an adopted workflow:
   - `_bmad/`, `_bmad-output/` → BMAD
   - `.planning/` → GSD-core
   - `openspec/`, `openspec/changes/` → openspec
-- **Overlay-owned** — directories that signal an adopted overlay:
+- **Overlay artifact** — directories that signal an adopted overlay:
   - `.impeccable/`, `PRODUCT.md`, `DESIGN.md` → impeccable
   - `.eslintrc*`, `eslint.config.*`, `.prettierrc*` → linter/formatter overlays
   - `.github/skills/`, `.claude/skills/`, `.cursor/skills/` → other overlays
@@ -104,7 +104,7 @@ Present the detected top-level entries with their classifications. Ask the user 
 
 - All source directories: include.
 - All generated directories: include only if they appear in CI output or distribution paths.
-- Workflow-owned directories: include with a note that the workflow owns them.
+- Workflow artifact directories: include with a note that the workflow keeps its state there.
 - VCS / meta directories: exclude (they're noise to an agent).
 
 ### Build, test, dev
@@ -115,11 +115,11 @@ For each command, show the detected value and ask the user to confirm or supply 
 
 Ask: "Does this project have hard rules an agent must not violate?" If yes, capture them one at a time. If no, drop the `AGENTS.POLICY.md` sibling and leave `## Policy` as a one-line placeholder: `_No project-level policy; see the skill overlays for scope._`
 
-Hard rules are project-enforced prohibitions (don't commit secrets, don't run `docker system prune`, don't push to `main` without review). Process rules (wait for user confirmation before merging, run the test suite before shipping) belong in the sibling that owns that ceremony (e.g., `AGENTS.WORKTREES.md`), not here.
+Hard rules are project-enforced prohibitions (don't commit secrets, don't run `docker system prune`, don't push to `main` without review). Process rules (wait for user confirmation before merging, run the test suite before shipping) belong in the sibling for that ceremony (e.g., `AGENTS.WORKTREES.md`), not here.
 
 ### Workflows
 
-Present the detected workflows (if any) and ask the user to confirm. Then ask if any of BMAD, GSD-core, or openspec should be adopted even if not detected. Workflows are overlays: for each, the skill adds a pointer line under `## Skill overlays` and tells the user to run that workflow's own onboarding skill.
+Present the detected workflows (if any) and ask the user to confirm. Then ask if any of BMAD, GSD-core, or openspec should be adopted even if not detected. Workflows are overlays: for each, the skill adds a pointer line under `## Skill overlays` and tells the user to run the workflow's onboarding skill.
 
 If the user is unsure, the skill offers a one-line description of each:
 
@@ -174,7 +174,7 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
 
 5. **Present the result.** Show the user the populated `AGENTS.md` (full file, not a diff) and ask for explicit confirmation before committing. The user must approve; the skill does not auto-commit.
 
-6. **Tell the user what's next.** For each adopted workflow, name the workflow's own onboarding skill and the command to run it:
+6. **Tell the user what's next.** For each adopted workflow, name the workflow's onboarding skill and the command to run it:
    - BMAD → "Run `bmad-project-context` to generate the BMAD context."
    - GSD-core → "Run `gsd-onboard` to set up `.planning/`."
    - openspec → "Run `openspec init` to register the first change proposal."
@@ -184,7 +184,7 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
 ### What the skill does not do
 
 - It does not write BMAD planning artifacts, GSD state files, or openspec change proposals. Those are the workflows' jobs.
-- It does not write `PRODUCT.md`, `DESIGN.md`, or any other overlay's sibling file — pointers only. (The project's own `AGENTS.<TOPIC>.md` spec siblings are agents-template's structure, so it does write those.)
+- It does not write `PRODUCT.md`, `DESIGN.md`, or any other overlay's sibling file — pointers only. (The project's `AGENTS.<TOPIC>.md` spec siblings are the split template's structure, so it does write those.)
 - It does not install BMAD, GSD-core, openspec, impeccable, or any other tool. It writes the file that tells an agent those tools are in use.
 - It does not commit. The user reviews and commits.
 - It does not delete archived files. The user is responsible for cleaning up `AGENTS.md.*.bak` after confirming the new `AGENTS.md` is correct.
