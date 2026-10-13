@@ -13,18 +13,6 @@ Heavy content lives in sibling files under `## Skill overlays`; load them only w
 
 ---
 
-## Reader contract (minimal)
-
-An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
-
-1. Treat sections without an `<!-- owner:... -->` comment as **project-owned**: their content is binding for this repository and the agent obeys it.
-2. Treat sections marked `<!-- owner:<workflow> -->` as **workflow-owned**: the agent obeys the *non-empty* blocks for workflows it knows it is running. Empty blocks (between `<!-- owner:<workflow> -->` and `<!-- /owner -->` with no content) are inert.
-3. Honor a freshness stamp (`<!-- verified YYYY-MM-DD against <sha> -->` or `<!-- approved YYYY-MM-DD -->`) on workflow blocks as a cache-invalidation signal. Orientation sections do not carry stamps.
-4. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly; it does not assume any overlay owns anything in `AGENTS.md`.
-5. Treat the schema header (`<!-- agents-template-schema 1 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
-
----
-
 ## Project
 
 `AgentsTemplate` — a template repository that ships a workflow-neutral `AGENTS.md` schema usable across BMAD, GSD-core, openspec, impeccable, and any future workflow or skill overlay. No application code.
@@ -48,7 +36,7 @@ Schema artifacts only; nothing is generated or rebuilt.
 
 ## Build, test, and development commands
 
-None. Plain Markdown artifacts, no build/lint/tests. Keep Markdown consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
+Depends on the project being developed or maintained.
 
 ---
 
