@@ -32,6 +32,7 @@ This repository contains only the schema artifacts. There is no source code, no 
 
 - `AGENTS.md` — this file. The worked example, conforming to schema 1. Downstream projects replace its content; they keep its structure.
 - `AGENTS-TEMPLATE.md` — the canonical template. New projects copy this file (under the name `AGENTS.md`) and fill in their own content. The template itself is not edited by downstream projects.
+- `AGENTS-TEMPLATE-SPLIT.md` — variant template for heavy projects: thin root `AGENTS.md` plus sibling `AGENTS.<TOPIC>.md` overlays (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`) loaded lazily via `## Skill overlays`. Distilled from the ControlEasy Reborn strategy.
 - `AGENTS-SPEC.md` — the authoritative reader contract. Defines how agents interpret any `AGENTS.md` written against this schema, the extension protocol for adding new workflows and overlays, and the conformance rules. Schema-versioned alongside the template.
 - `agents-init/SKILL.md` — the canonical onboarding skill. Run it in a downstream project to scaffold or refresh that project's `AGENTS.md` against the schema. Detects brownfield vs. greenfield, interviews the user for gaps, writes a conformant file, and archives any previous `AGENTS.md`.
 - `scripts/install.sh`, `scripts/install.ps1` — installers. Detect the user's installed agent harnesses and copy the right `agents-init` wrapper to the right location. Never overwrite without confirmation.
@@ -101,7 +102,7 @@ To add a new workflow, append a new `### <Workflow name>` subsection here with a
 
 This repository uses one overlay: the agents-template overlay, which is the schema artifacts themselves plus the onboarding skill. They are sibling files and a sibling skill that any agent reading this `AGENTS.md` should consult before editing the schema, producing a downstream `AGENTS.md`, or running onboarding in a new repo.
 
-- **agents-template** — `AGENTS-TEMPLATE.md` (the canonical template), `AGENTS-SPEC.md` (the reader contract), `agents-init/SKILL.md` (the onboarding skill). Read all three before changing the schema or running onboarding. Treat `AGENTS-SPEC.md` as authoritative when this example file and the spec disagree. The vendor wrappers at the repo root and the installers in `scripts/` are how this overlay reaches the user's harness.
+- **agents-template** — `AGENTS-TEMPLATE.md` (the canonical template), `AGENTS-SPEC.md` (the reader contract), `AGENTS-TEMPLATE-SPLIT.md` (split variant: thin root + lazy-loaded sibling `AGENTS.<TOPIC>.md` overlays), `agents-init/SKILL.md` (the onboarding skill). Read all of them before changing the schema or running onboarding. Treat `AGENTS-SPEC.md` as authoritative when this example file and the spec disagree. The vendor wrappers at the repo root and the installers in `scripts/` are how this overlay reaches the user's harness.
 
 Downstream projects that adopt additional overlays list them here as pointers. Example: a project using the impeccable design overlay would add a line of the form `- **impeccable** — \`PRODUCT.md\` (durable product truth), \`DESIGN.md\` (visual direction). Read both before any UI work.` See `AGENTS-TEMPLATE.md` for the full overlay-pointer pattern.
 
