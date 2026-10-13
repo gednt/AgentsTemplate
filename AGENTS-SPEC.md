@@ -79,11 +79,11 @@ An `AGENTS.md` written against schema 2 carries the following sections, in order
 7. **Language conventions** — per-language style overrides; one-line pointer or short subsections.
 8. **Conventions that differ from defaults** — catch-all for project-wide conventions.
 
-Schema 2 has **no workflow-block machinery**. Ownership is binary:
+Ownership is binary:
 
 - A section not pointed to from `## Skill overlays` is **project-owned**. The agent obeys it as policy for this repository.
-- Everything named in `## Skill overlays` is an overlay: a pointer to one or more sibling files the agent reads lazily. No overlay owns any block or section of `AGENTS.md`.
-- Adopted workflows (BMAD, GSD-core, openspec, ...) are overlays. They record their state in their own artifact directories and are registered as pointer lines under `## Skill overlays`.
+- Everything named in `## Skill overlays` is an overlay: a pointer to one or more sibling files the agent reads lazily. Overlays are pointers only.
+- Adopted tools and workflows (BMAD, GSD-core, openspec, ...) are overlays. They record their state in their own artifact directories and are registered as pointer lines under `## Skill overlays`.
 
 Section names are case-insensitive but conventionally Title Case (`## Policy`, not `## policy`). An agent encountering an unknown section name ignores it without error.
 
@@ -229,7 +229,7 @@ The spec does not require a central registry. Overlay authors are responsible fo
 A schema-2 file is **conformant** if:
 
 1. It carries both the header and footer `<!-- agents-template-schema N -->` markers with the same `N`.
-2. Its `## Reader contract (minimal)` section contains the obligations listed in the template, in the listed order, with wording substantively equivalent.
+2. If the `## Reader contract (minimal)` section is present (it is required when `AGENTS-SPEC.md` does not ship in the repository), it contains the obligations listed in the template, in the listed order, with wording substantively equivalent.
 3. Every `## Skill overlays` pointer references a file or directory that exists in the repository.
 
 An agent MUST treat a non-conformant file as a best-effort input: it parses what it can, ignores what it cannot, and does not error.
@@ -238,10 +238,10 @@ An agent MUST treat a non-conformant file as a best-effort input: it parses what
 
 ## Change history
 
-- **v1** (initial) — five-section schema, workflow blocks, skill overlays, freshness stamps, extension protocol.
-- **v1.1** — added Onboarding section. Overlays may now ship skills (not just point at sibling files); the agents-template overlay is registered with three pointers (template, spec, `agents-init` skill); conformance rule 5 generalized from "files" to "files or directories."
+- **v1** (initial) — sections-and-ownership model, skill overlays, freshness stamps, extension protocol.
+- **v1.1** — added Onboarding section. Overlays may now ship skills (not just point at sibling files); the agents-template overlay is registered with three pointers (template, spec, `agents-init` skill); the conformance pointer check was generalized from "files" to "files or directories."
 - **v1.2** — added Distribution section. Documented the vendor-wrapper convention, the full vendor matrix, and the installer scripts. Added Antigravity to the priority vendor list.
-- **v1.3** — the canonical template is now the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped project-owned siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository. (Never shipped as a release; folded into v2.)
-- **v2** — **removed the workflow-blocks mechanism**: adopted tools and workflows — BMAD, GSD-core, openspec, impeccable — are overlays, registered as pointer lines under `## Skill overlays`, with state kept in their own artifact directories. Freshness stamps are project-owned `<!-- Last reviewed: ... -->` stamps on sibling specification files. Breaking change: schema marker bumped to `agents-template-schema 2`.
+- **v1.3** — the canonical template became the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped project-owned siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository.
+- **v2** — ownership simplified to two kinds: project-owned content and overlay pointers. Adopted tools and workflows (BMAD, GSD-core, openspec, impeccable) are registered as overlay pointer lines under `## Skill overlays`, with their state kept in their own artifact directories. Freshness stamps are sibling review stamps. Schema marker bumped to `agents-template-schema 2`.
 
 <!-- agents-spec-schema 2 -->

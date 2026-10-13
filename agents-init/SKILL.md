@@ -5,7 +5,7 @@ description: Scaffold or refresh an `AGENTS.md` for any project, against the `ag
 
 # agents-init
 
-A one-shot onboarding skill for the universal `AGENTS.md` schema (version 1). Runs in any repository, in any language, with or without an existing planning workflow.
+A one-shot onboarding skill for the universal `AGENTS.md` schema (version 2). Runs in any repository, in any language, with or without an existing planning workflow.
 
 The skill does three things, in order:
 

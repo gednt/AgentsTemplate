@@ -13,19 +13,9 @@ Heavy content lives in sibling files under `## Skill overlays`; load them only w
 
 ---
 
-## Reader contract (minimal)
-
-An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
-
-1. Treat sections not pointed to from `## Skill overlays` as **project-owned**: their content is binding for this repository and the agent obeys it.
-2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly, lazily, only when the task touches the overlay's domain; no sibling owns anything in `AGENTS.md`.
-3. Treat the schema header (`<!-- agents-template-schema 2 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
-
----
-
 ## Project
 
-`AgentsTemplate` — a template repository that ships a workflow-neutral `AGENTS.md` schema usable across BMAD, GSD-core, openspec, impeccable, and any future workflow or skill overlay. No application code.
+`AgentsTemplate` — a template repository that ships a workflow-neutral `AGENTS.md` schema usable across BMAD, GSD-core, openspec, impeccable, and any future skill overlay. No application code.
 
 ---
 
@@ -46,7 +36,7 @@ Schema artifacts only; nothing is generated or rebuilt.
 
 ## Build, test, and development commands
 
-None. Plain Markdown artifacts, no build/lint/tests. Keep Markdown consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
+Depends on the project being developed or maintained. The artifacts here are plain Markdown; keep it consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
 
 ---
 

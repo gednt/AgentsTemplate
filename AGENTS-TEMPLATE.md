@@ -125,7 +125,7 @@ per convention; details belong in the sibling that owns the domain.>
 <!-- agents-template-schema 2 -->
 ```
 
-The header/footer markers and the reader contract are the schema-2 contract; a split project is a plain schema-2 file. Workflows (BMAD, GSD-core, openspec, ...) are adopted as ordinary overlay pointers — they own no block and no section.
+The header/footer markers and the reader contract are the schema-2 contract; a split project is a plain schema-2 file. Workflows (BMAD, GSD-core, openspec, ...) are adopted as ordinary overlay pointers; their state lives in their own artifact directories.
 
 ---
 
