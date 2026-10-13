@@ -1,6 +1,6 @@
-<!-- agents-spec-schema 2 -->
+<!-- agents-spec-schema 3 -->
 
-# AGENTS-SPEC.md — Reader Contract for `AGENTS.md` (v2)
+# AGENTS-SPEC.md — Reader Contract for `AGENTS.md` (v3)
 
 > The authoritative specification for how agents read and obey `AGENTS.md` files written against the `agents-template-schema` family. The template (`AGENTS-TEMPLATE.md`) and any `AGENTS.md` written from it MUST conform to this spec. When the two conflict, this spec wins.
 
@@ -25,7 +25,7 @@
 
 This spec governs:
 
-- `AGENTS.md` files written against `agents-template-schema 2` (or later).
+- `AGENTS.md` files written against `agents-template-schema 3` (or later). Files written against schema 1 or 2 are **legacy** input; agents read them best-effort (§Reader algorithm).
 - `AGENTS-TEMPLATE.md`, the canonical template that produces conforming `AGENTS.md` files.
 - Any agent that reads a conforming `AGENTS.md`, regardless of which tool or overlay produced or consumes the file.
 
@@ -49,26 +49,53 @@ This spec does **not** govern:
 
 ## Schema versioning
 
-Every conforming `AGENTS.md` carries a header comment of the form:
+Every conforming `AGENTS.md` declares its schema version in YAML frontmatter:
 
-```html
-<!-- agents-template-schema <N> -->
+```yaml
+---
+agents-template-schema: 3
+---
 ```
 
-where `<N>` is a positive integer. The header MUST appear:
+- The frontmatter block MUST be the first content of the file, delimited by `---` lines, so an agent discovers the key on a cheap prefix read.
+- The `agents-template-schema` key MUST be an integer and is the **authoritative** schema version marker.
+- Every generated file carries the key: the root `AGENTS.md` and every sibling `AGENTS.<TOPIC>.md`.
+- Schema 1 and 2 files carried the version as HTML header/footer comments (`<!-- agents-template-schema <N> -->`). Those markers are **legacy**; agents read them best-effort (§Reader algorithm) and MUST NOT write them.
 
-1. Within the first 20 lines of the file (so an agent discovers it on a cheap prefix read).
-2. Also as a footer comment at the very end of the file, so a partial-read agent that scrolls from the bottom still detects it.
+The schema 1–2 footer marker existed to guard against agent harnesses that read large files from the bottom. Schema 3 drops it and relies solely on the top-of-file frontmatter — an accepted trade-off, stated here so the choice is explicit. Where bottom-reading matters, agents parse the frontmatter of the first lines; no footer analogue is required.
 
-The footer is redundant by design: it guards against agent harnesses that truncate large files.
-
-A new minor version (e.g., `2.1`) adds sections or markers in a backward-compatible way. A new major version (e.g., `3`) may rename or repurpose sections and is **not** backward-compatible.
+A new minor version (e.g., `3.1`) adds sections or markers in a backward-compatible way. A new major version (e.g., `4`) may rename or repurpose sections and is **not** backward-compatible.
 
 ---
 
 ## Sections
 
-An `AGENTS.md` written against schema 2 carries the following sections, in order. Sections MAY be omitted; sections in **bold** are recommended.
+An `AGENTS.md` written against schema 3 carries a frontmatter header followed by the following sections, in order. Sections MAY be omitted; sections in **bold** are recommended.
+
+### Frontmatter
+
+Every generated file (root and siblings) starts with YAML frontmatter. On the root `AGENTS.md`:
+
+```yaml
+---
+agents-template-schema: 3
+project: "<project name>"
+description: "<one-line: what the project is>"
+language: "<language of the file, e.g. en>"
+generated: YYYY-MM-DD
+mode: primary
+---
+```
+
+Key semantics:
+
+- **`agents-template-schema`** — required, integer. The authoritative schema version marker (§Schema versioning).
+- **`project`**, **`description`**, **`language`**, **`generated`** — required in files written by a conforming onboarding skill; optional in hand-maintained files. `description` mirrors the project's one-line identity, not the file's load trigger.
+- **`mode: primary`** — required. The file is authoritative for its domain (a generated file is never a secondary draft of something else).
+- **`allowed-tools`** — optional; per the sibling conventions in `AGENTS-TEMPLATE.md`.
+- Unknown keys are ignored without error (§Reader algorithm).
+
+On siblings (`AGENTS.<TOPIC>.md`), the required frontmatter is `agents-template-schema`, `description`, and `mode: primary`, with `description` carrying the two-part "what the file governs + when to load it" value defined in `AGENTS-TEMPLATE.md`. Harnesses that do not parse frontmatter see the block as plain text between horizontal rules — inert but present; it MUST NOT be omitted for their sake.
 
 1. **Reader contract (minimal)** — restated at the top of `AGENTS.md` so the file is interpretable without this spec. MUST be present if `AGENTS-SPEC.md` is absent.
 2. **Project** — one-line description, domain, users.
@@ -121,7 +148,7 @@ Rules:
 
 A downstream project that adopts the schema writes a conformant `AGENTS.md` by running an **onboarding skill** shipped by the agents-template overlay. The canonical onboarding skill is `agents-init`. The contract between the onboarding skill and the schema is:
 
-- The onboarding skill reads `AGENTS-TEMPLATE.md` and replaces its placeholders with project-specific content. It MUST NOT modify the schema header/footer or the `## Reader contract (minimal)` section.
+- The onboarding skill reads `AGENTS-TEMPLATE.md` and replaces its placeholders with project-specific content. It MUST NOT modify the `agents-template-schema` key or the `## Reader contract (minimal)` section. With the user's answers it populates the frontmatter identity keys (`project`, `description`, `language`) and stamps `generated` with the write date.
 - The onboarding skill is **non-destructive**: it MUST archive any existing `AGENTS.md` to `AGENTS.md.<suffix>.bak` before overwriting. The suffix is the project slug (preferred) or a date stamp (fallback).
 - The onboarding skill MUST verify conformance against §Conformance before declaring success. If any check fails, the skill aborts and surfaces the failed checks; it does not write a non-conformant file.
 - The onboarding skill may create the project's `AGENTS.<TOPIC>.md` sibling specification files (the split template is canonical for this). It MUST NOT write other overlays' artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`); those belong to the other overlays' onboarding skills.
@@ -202,7 +229,7 @@ Semantics:
 
 When an agent encounters `AGENTS.md` in a repository:
 
-1. Read the file's first 20 lines and the last 5 lines. Locate the `<!-- agents-template-schema N -->` header (one or both should be present). If neither is present, treat the file as **legacy** and apply best-effort interpretation: section names map to their schema-2 counterparts if recognizable.
+1. Read the file's first lines. If the file starts with a `---`-delimited YAML frontmatter block, read `agents-template-schema` from it. If the key is absent, look for legacy HTML markers (`<!-- agents-template-schema N -->` header/footer, schema 1–2). If neither is present, treat the file as **legacy** and apply best-effort interpretation: section names map to their schema-3 counterparts if recognizable.
 2. Read the `## Reader contract (minimal)` section if present. Honor the obligations listed there.
 3. For each section in order: obey its content as repository instruction, except pointer lines under `## Skill overlays`, which name files to read lazily.
 4. Resolve the `## Skill overlays` list. For each pointer, read the referenced file(s) lazily — when the agent's task touches the overlay's domain.
@@ -218,7 +245,7 @@ New overlays join the spec by addition, not modification. To register one:
 1. **Choose a name.** A short lowercase identifier (`myoverlay`).
 2. **Define the sibling structure.** Where the overlay's files live and what the pointer line names.
 3. **Add a row** to the Supported overlays table in this spec.
-4. **Bump the schema marker** in this spec and the template (`<!-- agents-spec-schema 2 -->` → `2.1` for additions, `3` for breaking changes).
+4. **Bump the schema marker** in this spec (`<!-- agents-spec-schema 3 -->` → `3.1` for additions, `4` for a breaking schema change) and in the template's frontmatter `agents-template-schema` key.
 
 The spec does not require a central registry. Overlay authors are responsible for proposing their entries; the spec is updated by the template maintainer when consensus forms.
 
@@ -226,11 +253,13 @@ The spec does not require a central registry. Overlay authors are responsible fo
 
 ## Conformance
 
-A schema-2 file is **conformant** if:
+A schema-3 file is **conformant** if:
 
-1. It carries both the header and footer `<!-- agents-template-schema N -->` markers with the same `N`.
+1. Its first content is a `---`-delimited YAML frontmatter block carrying an integer `agents-template-schema: 3` key, with no legacy HTML `<!-- agents-template-schema ... -->` header or footer markers.
 2. If the `## Reader contract (minimal)` section is present (it is required when `AGENTS-SPEC.md` does not ship in the repository), it contains the obligations listed in the template, in the listed order, with wording substantively equivalent.
 3. Every `## Skill overlays` pointer references a file or directory that exists in the repository.
+
+A file generated by a conforming onboarding skill additionally passes the frontmatter checks of §Sections: the root carries `agents-template-schema`, `project`, `description`, `language`, `generated`, and `mode: primary`; every sibling carries `agents-template-schema`, its two-part `description`, and `mode: primary`.
 
 An agent MUST treat a non-conformant file as a best-effort input: it parses what it can, ignores what it cannot, and does not error.
 
@@ -243,5 +272,6 @@ An agent MUST treat a non-conformant file as a best-effort input: it parses what
 - **v1.2** — added Distribution section. Documented the vendor-wrapper convention, the full vendor matrix, and the installer scripts. Added Antigravity to the priority vendor list.
 - **v1.3** — the canonical template became the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository.
 - **v2** — overlay pointers became the single integration point: adopted tools and workflows (BMAD, GSD-core, openspec, impeccable) are registered as pointer lines under `## Skill overlays`, with their state kept in their own artifact directories. Freshness stamps are sibling review stamps. Schema marker bumped to `agents-template-schema 2`.
+- **v3** (breaking) — the schema version marker moved from HTML header/footer comments into a mandatory YAML frontmatter key (`agents-template-schema: 3`); the comments are removed from generated files and are read as legacy input. Generated roots additionally carry the identity keys `project`, `description`, `language`, `generated`, and `mode: primary`; every generated sibling carries the schema key in its own frontmatter. Schema 1–2 files no longer conform; agents read them best-effort.
 
-<!-- agents-spec-schema 2 -->
+<!-- agents-spec-schema 3 -->
