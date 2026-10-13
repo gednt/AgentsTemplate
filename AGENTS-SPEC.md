@@ -148,7 +148,7 @@ Rules:
 | Name             | Pointer(s)                                                  | Read / invoke when                       |
 | ---------------- | ----------------------------------------------------------- | ---------------------------------------- |
 | `impeccable`     | `PRODUCT.md`, `DESIGN.md`                                   | Any UI/design work                       |
-| `agents-template` | `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`, `agents-init/SKILL.md`, `AGENTS-TEMPLATE-SPLIT.md` | Editing the schema or onboarding a project (read template + spec; run `agents-init` to scaffold; use `AGENTS-TEMPLATE-SPLIT.md` when the project splits heavy `AGENTS.md` content into sibling `AGENTS.<TOPIC>.md` overlays) |
+| `agents-template` | `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`, `agents-init/SKILL.md` | Editing the schema or onboarding a project (read template + spec; run `agents-init` to scaffold). The canonical template ships as a split set: thin root `AGENTS.md` plus heavy, lazily loaded sibling `AGENTS.<TOPIC>.md` overlays |
 
 ---
 
@@ -284,6 +284,6 @@ An agent MUST treat a non-conformant file as a best-effort input: it parses what
 - **v1** (initial) — five-section schema, workflow blocks, skill overlays, freshness stamps, extension protocol.
 - **v1.1** — added Onboarding section. Overlays may now ship skills (not just point at sibling files); the agents-template overlay is registered with three pointers (template, spec, `agents-init` skill); conformance rule 5 generalized from "files" to "files or directories."
 - **v1.2** — added Distribution section. Documented the vendor-wrapper convention, the full vendor matrix, and the installer scripts. Added Antigravity to the priority vendor list.
-- **v1.3** — registered the split template (`AGENTS-TEMPLATE-SPLIT.md`) as an additional `agents-template` pointer. The split variant keeps the root `AGENTS.md` thin and moves heavy, domain-scoped content into project-owned sibling files (`AGENTS.<TOPIC>.md` with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp), loaded lazily via `## Skill overlays` pointers. First deployed in the ControlEasy Reborn repository.
+- **v1.3** — the canonical template is now the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped project-owned siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. `AGENTS-TEMPLATE.md` ships this structure directly (no separate variant file); a split project remains a plain schema-1 file. The previous mono-file template is retired. Distilled from a first production deployment in the ControlEasy Reborn repository.
 
 <!-- agents-spec-schema 1.3 -->

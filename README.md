@@ -2,13 +2,12 @@
 
 A vendor-neutral `AGENTS.md` schema for AI coding agents, plus the onboarding skill that scaffolds it in any project.
 
-This repository ships four artifacts:
+This repository ships three artifacts:
 
 | File | Role |
 | --- | --- |
 | `AGENTS-SPEC.md` | The authoritative reader contract. Defines how agents interpret any `AGENTS.md` written against this schema, the extension protocol for new workflows and overlays, and the conformance rules. |
-| `AGENTS-TEMPLATE.md` | The canonical template. Downstream projects copy it as `AGENTS.md` and fill in their own content. |
-| `AGENTS-TEMPLATE-SPLIT.md` | Variant template for projects that split a heavy `AGENTS.md` into a thin root file plus sibling `AGENTS.<TOPIC>.md` overlays (policy, stack, worktrees) loaded lazily. |
+| `AGENTS-TEMPLATE.md` | The canonical template (split edition): a thin root `AGENTS.md` plus heavy sibling `AGENTS.<TOPIC>.md` overlays (policy, stack, worktrees) loaded lazily. Downstream projects copy the root as `AGENTS.md` and create the siblings they earn. |
 | `agents-init/SKILL.md` | The canonical onboarding skill. Run it in a downstream project to scaffold or refresh that project's `AGENTS.md`. |
 
 ## What it solves

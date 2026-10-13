@@ -3,12 +3,6 @@ name: agents-init
 description: Scaffold or refresh an `AGENTS.md` for any project, against the `agents-template-schema`. Use when the user wants to set up `AGENTS.md` for the first time in a new repo, refresh an existing one, or migrate a project that has a non-conformant `AGENTS.md` (e.g., one written before this schema existed). Detects whether the repo is brownfield (existing signals) or greenfield (empty) and asks only the questions the repo can't answer. Never overwrites the user's existing `AGENTS.md` without archiving it first.
 ---
 
-<!--
-  This file is a generated copy of `agents-init/SKILL.md` for harness auto-discovery
-  (Codex skills system). Do not edit here. Edit the canonical file at
-  `agents-init/SKILL.md` and re-run the install script to refresh this copy.
--->
-
 # agents-init
 
 A one-shot onboarding skill for the universal `AGENTS.md` schema (version 1). Runs in any repository, in any language, with or without an existing planning workflow.
@@ -17,7 +11,7 @@ The skill does three things, in order:
 
 1. **Detect** — read the repo and decide brownfield vs. greenfield. Build a map of known facts.
 2. **Interview** — ask the user only about gaps. For greenfield repos, ask from scratch. For brownfield repos, auto-fill from the detected facts and confirm.
-3. **Write** — copy `AGENTS-TEMPLATE.md` into the repo as `AGENTS.md`, replace placeholders with the answers, archive the previous `AGENTS.md` if one exists, and verify conformance against `AGENTS-SPEC.md`.
+3. **Write** — copy `AGENTS-TEMPLATE.md` into the repo as `AGENTS.md`, replace placeholders with the answers, create the `AGENTS.<TOPIC>.md` sibling specification files the project needs (policy, stack, worktrees) from the template's sibling templates, archive the previous `AGENTS.md` if one exists, and verify conformance against `AGENTS-SPEC.md`.
 
 The skill is **idempotent** in the sense that re-running it on a repo with a conformant `AGENTS.md` is allowed — it offers to archive and rewrite, or to update specific sections in place. It is **not** destructive: it never overwrites an existing `AGENTS.md` without writing the previous contents to `AGENTS.md.<original-name>.bak` first.
 
@@ -171,6 +165,8 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
    - The `## Reader contract (minimal)` section.
    - The empty `<!-- owner:<code> -->` blocks (these are inert and will be filled by each workflow's own onboarding skill).
 
+   The canonical template is the **split edition**: heavy content lives in sibling `AGENTS.<TOPIC>.md` files (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`), written from the template's sibling templates with the frontmatter (`description`, `allowed-tools`, `mode: primary`) and review stamp filled in. The root keeps headline lines for every rule family. Create only the siblings the project earns — if the whole policy fits in one line, drop the `AGENTS.POLICY.md` sibling, keep the pointer out of `## Skill overlays`, and leave the root's placeholder sentence per the template. Then update the root's `## Skill overlays` to list exactly the siblings that exist.
+
 4. **Verify conformance.** Apply the conformance checklist from `AGENTS-SPEC.md` §10:
    - Header and footer `<!-- agents-template-schema 1 -->` markers present.
    - `## Reader contract (minimal)` carries the five obligations in order.
@@ -192,7 +188,7 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
 ### What the skill does not do
 
 - It does not write BMAD planning artifacts, GSD state files, or openspec change proposals. Those are the workflows' jobs.
-- It does not write `PRODUCT.md`, `DESIGN.md`, or any other overlay sibling file. Pointers only.
+- It does not write `PRODUCT.md`, `DESIGN.md`, or any other overlay's sibling file — pointers only. (The project's own `AGENTS.<TOPIC>.md` spec siblings are agents-template's structure, so it does write those.)
 - It does not install BMAD, GSD-core, openspec, impeccable, or any other tool. It writes the file that tells an agent those tools are in use.
 - It does not commit. The user reviews and commits.
 - It does not delete archived files. The user is responsible for cleaning up `AGENTS.md.*.bak` after confirming the new `AGENTS.md` is correct.
@@ -258,7 +254,8 @@ A downstream project MUST NOT modify the canonical skill body. If a project need
 **Outputs:**
 
 - `AGENTS.md` — populated, conformant, replacing or newly created.
+- `AGENTS.<TOPIC>.md` — the project's sibling specification files (policy, stack, worktrees, ...), created from the template's sibling templates as needed.
 - `AGENTS.md.<suffix>.bak` — the previous `AGENTS.md`, if any. Never overwritten; if a bak with the same suffix exists, the skill aborts and asks the user to resolve manually.
 - A short transcript (printed to the conversation, not written to disk) listing the detected facts, the interview answers, the conformance check results, and the next steps the user should run.
 
-**Side effects:** none beyond the two file changes above. The skill does not touch git, does not install packages, does not write to any other location.
+**Side effects:** none beyond the file changes above. The skill does not touch git, does not install packages, does not write to any other location.
