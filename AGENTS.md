@@ -1,10 +1,15 @@
+---
+description: "AgentsTemplate — vendor-neutral AGENTS.md schema (schema 1). Thin index per the split template; load sibling overlays only when the task touches their domain."
+mode: primary
+---
+
 <!-- agents-template-schema 1 -->
 
 # AGENTS.md
 
-> Worked example of the universal `AGENTS.md` schema, version 1. This file is part of the [AgentsTemplate](https://github.com/) repository, which ships the template (`AGENTS-TEMPLATE.md`) and the authoritative reader contract (`AGENTS-SPEC.md`).
->
-> Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own. The structure, ownership markers, and freshness stamps stay; the prose changes.
+> Worked example of the universal `AGENTS.md` schema, version 1. Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own; structure, ownership markers, and freshness stamps stay.
+
+Heavy content lives in sibling files under `## Skill overlays`; load them only when the task touches that domain.
 
 ---
 
@@ -22,59 +27,40 @@ An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
 
 ## Project
 
-`AgentsTemplate` — a template repository that ships a workflow-neutral `AGENTS.md` schema usable across BMAD, GSD-core, openspec, impeccable, and any future workflow or skill overlay. The repository's only project is the schema itself; there is no application code.
+`AgentsTemplate` — a template repository that ships a workflow-neutral `AGENTS.md` schema usable across BMAD, GSD-core, openspec, impeccable, and any future workflow or skill overlay. No application code.
 
 ---
 
 ## Repo anatomy
 
-This repository contains only the schema artifacts. There is no source code, no build output, and no generated distribution.
+Schema artifacts only; nothing is generated or rebuilt.
 
-- `AGENTS.md` — this file. The worked example, conforming to schema 1. Downstream projects replace its content; they keep its structure.
-- `AGENTS-TEMPLATE.md` — the canonical template (split edition): a thin root `AGENTS.md` plus sibling `AGENTS.<TOPIC>.md` overlays (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`) loaded lazily via `## Skill overlays`. New projects copy the root skeleton under the name `AGENTS.md` and create the siblings they earn. The template itself is not edited by downstream projects.
-- `AGENTS-SPEC.md` — the authoritative reader contract. Defines how agents interpret any `AGENTS.md` written against this schema, the extension protocol for adding new workflows and overlays, and the conformance rules. Schema-versioned alongside the template.
-- `agents-init/SKILL.md` — the canonical onboarding skill. Run it in a downstream project to scaffold or refresh that project's `AGENTS.md` against the schema. Detects brownfield vs. greenfield, interviews the user for gaps, writes a conformant file, and archives any previous `AGENTS.md`.
-- `scripts/install.sh`, `scripts/install.ps1` — installers. Detect the user's installed agent harnesses and copy the right `agents-init` wrapper to the right location. Never overwrite without confirmation.
-- Vendor wrappers at the repo root (`.claude/`, `.opencode/`, `.codex/`, `.agents/`, `.cursor/`, `.gemini/`, `.agent/`, `.github/`) — thin slash-command files and skill auto-discovery copies that make the canonical skill discoverable by the seven most popular agent harnesses. See `AGENTS-SPEC.md` §Distribution for the full vendor matrix.
-- `AGENTS.md.bookingexperience-bak` — the previous `AGENTS.md` from when this directory hosted a real BMAD-managed project. Kept for reference; delete it once the migration is confirmed.
-- `README.md` — short pointer to the schema artifacts.
-- `LICENSE` — the license under which the schema artifacts are released.
-
-Generated output: none. The repository ships only its source artifacts; there is nothing to rebuild.
+- `AGENTS.md` — this file, the worked example. Replace its content; keep its structure.
+- `AGENTS-TEMPLATE.md` — the canonical split template: thin root + lazy-loaded `AGENTS.<TOPIC>.md` siblings.
+- `AGENTS.WORKTREES.md` — this repo's own worktree policy (the split template in practice).
+- `AGENTS-SPEC.md` — the authoritative reader contract; schema-versioned alongside the template.
+- `agents-init/SKILL.md` — the canonical onboarding skill: detect brownfield/greenfield → interview gaps → write → verify conformance.
+- `scripts/install.sh`, `scripts/install.ps1` — harness-detecting installers; never overwrite without confirmation.
+- Vendor wrappers at the repo root (`.claude/`, `.opencode/`, `.codex/`, `.agents/`, `.cursor/`, `.gemini/`, `.agent/`, `.github/`) — thin dispatchers to the canonical skill. Full matrix: `AGENTS-SPEC.md` §Distribution.
+- `AGENTS.md.bookingexperience-bak` — legacy archive from this directory's BMAD-managed era; delete once migration is confirmed.
 
 ---
 
 ## Build, test, and development commands
 
-There is no build, no test suite, and no local development server. The artifacts are plain Markdown. Downstream projects replace this section with their toolchain.
-
-- No build step. Editing the Markdown files is the entire development loop.
-- No tests. Schema changes are validated by reading `AGENTS-SPEC.md`'s conformance section and by re-checking worked examples like this file.
-- No linter. Keep Markdown consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
+None. Plain Markdown artifacts, no build/lint/tests. Keep Markdown consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
 
 ---
 
 ## Policy
 
-### Git worktree rule
-
-This repository enforces worktree-only development for both human and AI agents. The rule applies to every change, including edits to the schema, the spec, the canonical skill, the vendor wrappers, and the installers.
-
-- **All Git work happens in a worktree.** Never commit, branch, push, or merge on `main`. The only permitted operation on `main` is fast-forwarding `main` to a feature branch's tip after a human has reviewed and approved the change. For any change, create a dedicated Git worktree at `.worktrees/<task>/` on a branch `feat/<task>`, where `<task>` is a semantic, lowercase, hyphen-separated name describing the change.
-- **The agent reports done; the human merges on `main`.** The agent commits, branches, and pushes inside the worktree, then stops. The agent MUST NOT run `git merge` on `main` for any reason. The only exception: the human explicitly says, in the current turn, "merge on main." Anything else — including approval of the change — is not an instruction to merge.
-- **Pre-flight check before creating a worktree.** Use only read-only Git commands to confirm that the branch `feat/<task>` does not already exist and that the path `.worktrees/<task>/` is not already a worktree. If either exists, abort and pick a different task name.
-- **One task, one worktree, one branch.** Do not reuse a `<task>` slug, a `feat/<task>` branch, or a `.worktrees/<task>/` path between concurrent tasks. The same name may be reused only after the previous worktree is removed and its branch is merged or deleted.
-- **Canonical command.** `git worktree add -b feat/<task> .worktrees/<task> main` is the canonical way to create the worktree; it creates the branch and the path in one step.
-- **Clean up after merge.** After a change merges to `main` and is verified, remove only the worktree you created: `git worktree remove .worktrees/<task>`. Do not touch unrelated worktrees, branches, or paths.
-- **No force-push, no rewriting shared history.** Do not rewrite commits that have been pushed or that other worktrees share. Local-only history rewrites (interactive rebase before push) are allowed when no one else depends on the branch.
-
-The template's recommended form of this rule, plus a "consider adopting" framing, is in `AGENTS-TEMPLATE.md` §Policy. Downstream projects copy the rule verbatim or adapt the branch prefix (`fix/`, `chore/`) to their convention.
+Mandatory Git worktree rules live in [`AGENTS.WORKTREES.md`](AGENTS.WORKTREES.md). **Load it before any commit, branch, or merge.** Headlines: all Git work happens in a worktree (`.worktrees/<task>/` on `feat/<task>`); the agent reports done; the human merges on `main`.
 
 ---
 
 ## Workflow blocks
 
-This repository does not run a planning or state workflow. All three workflow blocks are intentionally empty (inert) so a downstream project that copies this file as a starting point can populate whichever blocks its workflow needs without first removing the others.
+No planning or state workflow is run here; all blocks are intentionally empty (inert) and are copy-through starting points for downstream projects.
 
 ### BMAD
 
@@ -99,26 +85,25 @@ To add a new workflow, append a new `### <Workflow name>` subsection here with a
 
 ## Skill overlays
 
-This repository uses one overlay: the agents-template overlay, which is the schema artifacts themselves plus the onboarding skill. They are sibling files and a sibling skill that any agent reading this `AGENTS.md` should consult before editing the schema, producing a downstream `AGENTS.md`, or running onboarding in a new repo.
+- **AGENTS.WORKTREES** — `AGENTS.WORKTREES.md`. Mandatory Git worktree rule (all Git work in a worktree; human merges on `main`). Load before any commit, branch, or merge.
+- **agents-template** — `AGENTS-TEMPLATE.md` (the canonical split template), `AGENTS-SPEC.md` (the reader contract), `agents-init/SKILL.md` (the onboarding skill). Read all three before changing the schema or running onboarding. The spec wins on conflict. Vendor wrappers and the `scripts/` installers are how this overlay reaches the user's harness.
 
-- **agents-template** — `AGENTS-TEMPLATE.md` (the canonical split template: thin root + lazy-loaded sibling `AGENTS.<TOPIC>.md` overlays), `AGENTS-SPEC.md` (the reader contract), `agents-init/SKILL.md` (the onboarding skill). Read all three before changing the schema or running onboarding. Treat `AGENTS-SPEC.md` as authoritative when this example file and the spec disagree. The vendor wrappers at the repo root and the installers in `scripts/` are how this overlay reaches the user's harness.
-
-Downstream projects that adopt additional overlays list them here as pointers. Example: a project using the impeccable design overlay would add a line of the form `- **impeccable** — \`PRODUCT.md\` (durable product truth), \`DESIGN.md\` (visual direction). Read both before any UI work.` See `AGENTS-TEMPLATE.md` for the full overlay-pointer pattern.
+Downstream projects that adopt additional overlays list them here as pointers, e.g. `- **impeccable** — \`PRODUCT.md\`, \`DESIGN.md\`. Read both before any UI work.`
 
 ---
 
 ## Language conventions
 
-None. The schema artifacts are plain Markdown with no language-specific tooling. Downstream projects add a `### <Language>` subsection per language they use.
+None. Plain Markdown; downstream projects add a `### <Language>` subsection per language as needed.
 
 ---
 
 ## Conventions that differ from defaults
 
-- Schema artifacts are plain Markdown. No preprocessing, no includes, no templating. The template is meant to be copied verbatim, not transpiled.
-- Header line numbering in `AGENTS-SPEC.md` is intentional: it lets readers cite sections by number (`AGENTS-SPEC.md §5`). Do not strip the numbers.
-- Workflow block markers (`<!-- owner:<code> -->`, `<!-- /owner -->`) are part of the schema contract. Do not rename them or fold them into a different comment style.
-- The schema version marker (`<!-- agents-template-schema N -->`) appears in the first 20 lines and as a footer at the end of the file. Both occurrences are required for agents that read partial files.
+- No preprocessing, includes, or templating — the template is copied verbatim, not transpiled.
+- Header line numbering in `AGENTS-SPEC.md` is intentional (sections are cited by number, e.g. `AGENTS-SPEC.md §5`); do not strip it.
+- Workflow block markers (`<!-- owner:<code> -->`, `<!-- /owner -->`) are schema contract; do not rename or restyle them.
+- Schema markers (`<!-- agents-template-schema N -->`) appear both in the first 20 lines and in the footer (agents that read partial files need both).
 
 ---
 
