@@ -74,18 +74,17 @@ If multiple sources are present, prefer the most specific (project script file o
 
 ### Existing `AGENTS.md`
 
-Read the file if present. Test for schema-1 conformance:
+Read the file if present. Test for schema conformity:
 
-- Header comment `<!-- agents-template-schema 1 -->` in the first 20 lines.
-- Footer comment `<!-- agents-template-schema 1 -->` in the last 5 lines.
-- Five obligations in `## Reader contract (minimal)`.
-- `<!-- owner:<code> -->` markers paired with `<!-- /owner -->`.
+- Header comment `<!-- agents-template-schema <N> -->` in the first 20 lines.
+- Footer comment with the **same** `N` in the last 5 lines.
+- The obligations in `## Reader contract (minimal)` present in order.
 
-If the file is conformant, the skill offers two paths: (a) **refresh in place** — re-run detection, update only changed sections, preserve the user's prose; (b) **archive and rewrite** — move to `AGENTS.md.<original-name>.bak` and write a fresh conformant file. The default is (a) for conformant files, (b) for non-conformant files.
+If the file is conformant, the skill offers two paths: (a) **refresh in place** — re-run detection, update only changed sections, preserve the user's prose; (b) **archive and rewrite** — move to `AGENTS.md.<original-name>.bak` and write a fresh conformant file. The default is (a) for conformant files, (b) for non-conformant files, and (b) when the file is written against an older schema.
 
 ### Existing workflow signals
 
-If any workflow-owned directories are detected, note them. The interview asks the user to confirm each detected workflow and to declare any workflows that are in use but leave no on-disk signal (rare; the user usually adds the signal directory themselves).
+If any workflow artifact directories are detected (BMAD's `_bmad-output/` or `_bmad/`, GSD's `.planning/`, openspec's `openspec/changes/`), note them. The interview asks the user to confirm each detected workflow and to declare any workflows in use with no on-disk signal. Detected workflows become overlay pointer lines under `## Skill overlays`.
 
 ---
 
@@ -114,13 +113,13 @@ For each command, show the detected value and ask the user to confirm or supply 
 
 ### Policy
 
-Ask: "Does this project have hard rules an agent must not violate, beyond what the workflows enforce?" If yes, capture them one at a time. If no, write the section as a one-line placeholder: `_No project-level policy; see workflow blocks for ceremony._`
+Ask: "Does this project have hard rules an agent must not violate?" If yes, capture them one at a time. If no, drop the `AGENTS.POLICY.md` sibling and leave `## Policy` as a one-line placeholder: `_No project-level policy; see the skill overlays for scope._`
 
-Hard rules are project-enforced prohibitions (don't commit secrets, don't run `docker system prune`, don't push to `main` without review). Process rules (wait for user confirmation, run the test suite before merging) belong in the workflow blocks, not here.
+Hard rules are project-enforced prohibitions (don't commit secrets, don't run `docker system prune`, don't push to `main` without review). Process rules (wait for user confirmation before merging, run the test suite before shipping) belong in the sibling that owns that ceremony (e.g., `AGENTS.WORKTREES.md`), not here.
 
 ### Workflows
 
-Present the detected workflows (if any) and ask the user to confirm. Then ask if any of BMAD, GSD-core, or openspec should be adopted even if not detected. For each adopted workflow, the skill writes an empty `<!-- owner:<code> --> ... <!-- /owner -->` block and tells the user to run that workflow's own onboarding skill to fill it.
+Present the detected workflows (if any) and ask the user to confirm. Then ask if any of BMAD, GSD-core, or openspec should be adopted even if not detected. Workflows are overlays: for each, the skill adds a pointer line under `## Skill overlays` and tells the user to run that workflow's own onboarding skill.
 
 If the user is unsure, the skill offers a one-line description of each:
 
@@ -130,7 +129,7 @@ If the user is unsure, the skill offers a one-line description of each:
 
 ### Skill overlays
 
-Present the detected overlays (if any) and ask the user to confirm. Then ask if the project uses any overlays that leave no on-disk signal. For each adopted overlay, add a pointer line in `## Skill overlays`. The skill does **not** verify that the pointer resolves to an existing file — the user is responsible for that, and the spec's conformance rule 5 will catch a broken pointer when next an agent reads the file.
+Present the detected overlays (if any) and ask the user to confirm. Then ask if the project uses any overlays that leave no on-disk signal. For each adopted overlay, add a pointer line in `## Skill overlays`. The skill does **not** verify that the pointer resolves to an existing file — the user is responsible for that, and the spec's conformance pointer check will catch a broken pointer when next an agent reads the file.
 
 Common overlays:
 
@@ -160,27 +159,24 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
    - If the existing file's name is exactly `AGENTS.md`, rename to `AGENTS.md.<detected-or-archive-suffix>.bak`. The suffix is the project's slugified name (e.g., `AGENTS.md.bookingexperience-bak`) or a timestamp (`AGENTS.md.2026-09-11.bak`) if no project name is available.
    - Record the archived path in the skill's transcript so the user can recover.
 
-3. **Replace placeholders.** Walk the template's `Project`, `Repo anatomy`, `Build, test, and development commands`, `Policy`, `Workflow blocks`, `Skill overlays`, `Language conventions`, `Conventions that differ from defaults` sections and replace their `<...>` placeholders with the collected values. Leave untouched:
+3. **Replace placeholders.** Walk the template's `Project`, `Repo anatomy`, `Build, test, and development commands`, `Policy`, `Skill overlays`, `Language conventions`, `Conventions that differ from defaults` sections and replace their `<...>` placeholders with the collected values. Leave untouched:
    - The schema header and footer comments.
    - The `## Reader contract (minimal)` section.
-   - The empty `<!-- owner:<code> -->` blocks (these are inert and will be filled by each workflow's own onboarding skill).
 
    The canonical template is the **split edition**: heavy content lives in sibling `AGENTS.<TOPIC>.md` files (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`), written from the template's sibling templates with the frontmatter (`description`, `allowed-tools`, `mode: primary`) and review stamp filled in. The root keeps headline lines for every rule family. Create only the siblings the project earns — if the whole policy fits in one line, drop the `AGENTS.POLICY.md` sibling, keep the pointer out of `## Skill overlays`, and leave the root's placeholder sentence per the template. Then update the root's `## Skill overlays` to list exactly the siblings that exist.
 
-4. **Verify conformance.** Apply the conformance checklist from `AGENTS-SPEC.md` §10:
-   - Header and footer `<!-- agents-template-schema 1 -->` markers present.
-   - `## Reader contract (minimal)` carries the five obligations in order.
-   - Every `<!-- owner:<code> -->` is paired with `<!-- /owner -->`.
-   - Every workflow code is in the Supported workflows table.
+4. **Verify conformance.** Apply the conformance checklist from `AGENTS-SPEC.md`:
+   - Header and footer `<!-- agents-template-schema <N> -->` markers present, same `N` in both.
+   - `## Reader contract (minimal)` carries the obligations in order.
    - Every `## Skill overlays` pointer resolves to an existing file or directory.
 
    If any check fails, the skill **does not** write the file. It returns the failed checks to the user for correction.
 
 5. **Present the result.** Show the user the populated `AGENTS.md` (full file, not a diff) and ask for explicit confirmation before committing. The user must approve; the skill does not auto-commit.
 
-6. **Tell the user what's next.** For each adopted workflow that has an empty block, name the workflow's onboarding skill and the command to run it:
-   - BMAD → "Run `bmad-project-context` to fill the BMAD block."
-   - GSD-core → "Run `gsd-onboard` to fill the GSD block."
+6. **Tell the user what's next.** For each adopted workflow, name the workflow's own onboarding skill and the command to run it:
+   - BMAD → "Run `bmad-project-context` to generate the BMAD context."
+   - GSD-core → "Run `gsd-onboard` to set up `.planning/`."
    - openspec → "Run `openspec init` to register the first change proposal."
 
    For each adopted overlay, confirm the pointer and tell the user the skill does not manage the overlay's internal files.
@@ -203,7 +199,7 @@ The skill is safe to re-run. Behavior depends on the state of the existing `AGEN
 - **Non-conformant `AGENTS.md` present** — offer *archive and rewrite* only (default: rewrite).
 - **No `AGENTS.md`** — write a fresh one.
 
-A re-run also picks up newly adopted workflows or overlays. If the user has added BMAD since the last `AGENTS.md` was written, the skill offers to add the BMAD block.
+A re-run also picks up newly adopted workflows or overlays. If the user has adopted BMAD since the last `AGENTS.md` was written, the skill offers to add the BMAD overlay pointer.
 
 ---
 

@@ -1,15 +1,25 @@
 ---
-description: "AgentsTemplate — vendor-neutral AGENTS.md schema (schema 1). Thin index per the split template; load sibling overlays only when the task touches their domain."
+description: "AgentsTemplate — vendor-neutral AGENTS.md schema (schema 2). Thin index per the split template; load sibling overlays only when the task touches their domain."
 mode: primary
 ---
 
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->
 
 # AGENTS.md
 
-> Worked example of the universal `AGENTS.md` schema, version 1. Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own; structure, ownership markers, and freshness stamps stay.
+> Worked example of the universal `AGENTS.md` schema, version 2. Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own; the structure and markers stay.
 
 Heavy content lives in sibling files under `## Skill overlays`; load them only when the task touches that domain.
+
+---
+
+## Reader contract (minimal)
+
+An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
+
+1. Treat sections not pointed to from `## Skill overlays` as **project-owned**: their content is binding for this repository and the agent obeys it.
+2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly, lazily, only when the task touches the overlay's domain; no sibling owns anything in `AGENTS.md`.
+3. Treat the schema header (`<!-- agents-template-schema 2 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
 
 ---
 
@@ -36,7 +46,7 @@ Schema artifacts only; nothing is generated or rebuilt.
 
 ## Build, test, and development commands
 
-Depends on the project being developed or maintained.
+None. Plain Markdown artifacts, no build/lint/tests. Keep Markdown consistent with the existing files (two-space list indentation, fenced code blocks with language hints, header levels step by one).
 
 ---
 
@@ -65,9 +75,8 @@ None. Plain Markdown; downstream projects add a `### <Language>` subsection per 
 
 - No preprocessing, includes, or templating — the template is copied verbatim, not transpiled.
 - Header line numbering in `AGENTS-SPEC.md` is intentional (sections are cited by number, e.g. `AGENTS-SPEC.md §5`); do not strip it.
-- Workflow block markers (`<!-- owner:<code> -->`, `<!-- /owner -->`) are schema contract; do not rename or restyle them.
 - Schema markers (`<!-- agents-template-schema N -->`) appear both in the first 20 lines and in the footer (agents that read partial files need both).
 
 ---
 
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->

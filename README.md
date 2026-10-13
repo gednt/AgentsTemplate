@@ -16,10 +16,9 @@ Every AI coding harness (Claude Code, Cursor, Codex, Gemini CLI, Antigravity, Gi
 
 Concretely the schema introduces:
 
-- **Workflow blocks** — `<!-- owner:bmad --> ... <!-- /owner -->` regions that a workflow owns and that the agent obeys only if it runs that workflow.
-- **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`) that an agent reads lazily when its task touches the overlay's domain.
-- **Freshness stamps** — `<!-- verified YYYY-MM-DD against <sha> -->` and `<!-- approved YYYY-MM-DD -->` markers that let an agent detect stale workflow context without erroring.
-- **A conformance contract** — five checks that any `AGENTS.md` must pass to be called conformant.
+- **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md`) that an agent reads lazily when its task touches the overlay's domain. All tools and workflows — BMAD, GSD-core, openspec, impeccable — are overlays; none owns a block inside `AGENTS.md`.
+- **Freshness stamps** — `<!-- Last reviewed: YYYY-MM-DD against <reference> -->` markers on sibling specification files that let an agent detect stale context without erroring.
+- **A conformance contract** — a short checklist any `AGENTS.md` must pass to be called conformant.
 
 ## Quick start for downstream projects
 
@@ -45,7 +44,7 @@ The installer never overwrites an existing wrapper without confirmation and prin
 
 ## Schema version
 
-The shipped artifacts conform to `agents-spec-schema 1.3` and `agents-template-schema 1`. The two version numbers move together: bumping either is a breaking change to the contract.
+The shipped artifacts conform to `agents-spec-schema 2` and `agents-template-schema 2`. The two version numbers move together: bumping either is a breaking change to the contract.
 
 ## License
 

@@ -1,12 +1,12 @@
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->
 
 # AGENTS.md Template (v1) — Split Edition
 
-> A schema-driven template for `AGENTS.md` that works across BMAD, GSD-core, openspec, impeccable, and any future workflow or skill overlay — shipped as a **split set**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped sibling files `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, and so on, loaded **only when the task touches that domain**.
+> A schema-driven template for `AGENTS.md` that works across BMAD, GSD-core, openspec, impeccable, and any future skill overlay — shipped as a **split set**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped sibling files `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, and so on, loaded **only when the task touches that domain**.
 
 Every harness loads the root file on session start, so the root stays an index: orientation, headline rules, and pointers. Depth lives in the siblings, each with loader frontmatter and a review stamp. This keeps the first turn of every session cheap without giving up enforceable detail — a production proof first ran in the ControlEasy Reborn repository.
 
-For the authoritative reader contract — how agents interpret this template, the extension protocol, and how freshness stamps behave — see `AGENTS-SPEC.md`.
+For the authoritative reader contract — how agents interpret this template, the extension protocol, and how review stamps behave — see `AGENTS-SPEC.md`.
 
 ---
 
@@ -14,7 +14,7 @@ For the authoritative reader contract — how agents interpret this template, th
 
 1. The root `AGENTS.md` is loaded by every harness on session start. It must be short, self-sufficient for orientation, and name every sibling with a `## Skill overlays` pointer.
 2. Siblings are loaded **on demand** — only when the task touches their domain. The load trigger is written in the sibling's pointer line and reinforced by the sibling's own frontmatter `description`.
-3. Siblings are project-owned specification files. They never carry `<!-- owner:... -->` blocks and never hold workflow state.
+3. Siblings are project-owned specification files. They own nothing in `AGENTS.md` and never hold external tool state.
 4. A sibling may cross-reference another sibling by path (`AGENTS.WORKTREES.md`), but must remain interpretable on its own.
 
 The split is **lossless by construction**: the root keeps one headline line per rule so an agent that never opens a sibling still knows the rule exists and where to find it. Moving a rule family without leaving its headline is a conformance failure, not a shortcut.
@@ -30,7 +30,7 @@ Tiny projects (a schema artifact, a single-purpose script repo) may inline every
 Copy this skeleton to the project root as `AGENTS.md` and replace the placeholders:
 
 ```markdown
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->
 
 <optional YAML frontmatter: description + allowed-tools, per sibling
 conventions below. Omit entirely on harnesses that ignore it.>
@@ -48,11 +48,9 @@ load them only when the task touches that domain.
 
 An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
 
-1. Treat sections without an `<!-- owner:... -->` comment as **project-owned**: their content is binding for this repository and the agent obeys it.
-2. Treat sections marked `<!-- owner:<workflow> -->` as **workflow-owned**: the agent obeys the *non-empty* blocks for workflows it knows it is running. Empty blocks (between `<!-- owner:<workflow> -->` and `<!-- /owner -->` with no content) are inert.
-3. Honor a freshness stamp (`<!-- verified YYYY-MM-DD against <sha> -->` or `<!-- approved YYYY-MM-DD -->`) on workflow blocks as a cache-invalidation signal. Orientation sections do not carry stamps.
-4. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly; it does not assume any overlay owns anything in `AGENTS.md`.
-5. Treat the schema header (`<!-- agents-template-schema 1 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
+1. Treat sections not pointed to from `## Skill overlays` as **project-owned**: their content is binding for this repository and the agent obeys it.
+2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those sibling files directly, lazily, only when the task touches the overlay's domain; no sibling owns anything in `AGENTS.md`.
+3. Treat the schema header (`<!-- agents-template-schema 2 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
 
 ---
 
@@ -87,34 +85,8 @@ top prohibitions>. Stack and language conventions live in
 [`AGENTS.STACK.md`](AGENTS.STACK.md); Git ceremony in
 [`AGENTS.WORKTREES.md`](AGENTS.WORKTREES.md).
 
-If the project has **no** hard policy beyond what the workflows enforce, drop
-the AGENTS.POLICY.md sibling and write instead: _No project-level policy; see
-workflow blocks for ceremony._
-
----
-
-## Workflow blocks
-
-Each block below is owned by one workflow. The block is **inert** when empty.
-Workflows may replace the contents of their own block on refresh. Workflows
-MUST NOT modify another workflow's block. Full guidance + the block markers
-live in `AGENTS-SPEC.md` §Workflow blocks; reproduce the empty blocks here so
-workflows can fill them.
-
-### BMAD
-
-<!-- owner:bmad -->
-<!-- /owner -->
-
-### GSD-core
-
-<!-- owner:gsd -->
-<!-- /owner -->
-
-### openspec
-
-<!-- owner:openspec -->
-<!-- /owner -->
+If the project has **no** hard policy, drop the AGENTS.POLICY.md sibling and
+write instead: _No project-level policy; see the skill overlays for scope._
 
 ---
 
@@ -150,10 +122,10 @@ per convention; details belong in the sibling that owns the domain.>
 
 ---
 
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->
 ```
 
-The header/footer markers, reader contract, and empty-owner-block rules are the schema-1 contract; a split project is still a plain schema-1 file.
+The header/footer markers and the reader contract are the schema-2 contract; a split project is a plain schema-2 file. Workflows (BMAD, GSD-core, openspec, ...) are adopted as ordinary overlay pointers — they own no block and no section.
 
 ---
 
@@ -187,13 +159,13 @@ The root file may carry the same frontmatter shape (omit `allowed-tools` where t
 
 ### Review stamp
 
-Directly after the frontmatter, each sibling carries a project-owned freshness stamp mirroring the schema's workflow-block stamps:
+Directly after the frontmatter, each sibling carries a project-owned review stamp:
 
 ```html
 <!-- Last reviewed: YYYY-MM-DD against <reference> -->
 ```
 
-`<reference>` is whatever the sibling's truth is verified against — a constitution document, an ADR index, or a commit SHA. The same semantics apply as `AGENTS-SPEC.md` §Freshness stamps: stale is a hint to re-verify, not an error. The root's orientation sections carry no stamp, per the schema.
+`<reference>` is whatever the sibling's truth is verified against — a constitution document, an ADR index, or a commit SHA. Semantics per `AGENTS-SPEC.md` §Freshness stamps: stale is a hint to re-verify, not an error. The root's orientation sections carry no stamp, per the schema.
 
 ---
 
@@ -364,8 +336,8 @@ Any domain may earn its own sibling beyond the three above. Follow the formula:
 1. Copy the root skeleton above into the project as `AGENTS.md` and fill in the placeholders.
 2. Create the siblings the project actually needs from the templates above. Skip a domain entirely if it fits in one line rather than creating a stub.
 3. Move nothing without leaving its headline in the root; remove nothing that is enforceable.
-4. Verify: the root still passes `AGENTS-SPEC.md` §Conformance; each sibling exists, is self-contained, carries no `<!-- owner:... -->` blocks, and is listed in the root's `## Skill overlays`.
+4. Verify: the root still passes `AGENTS-SPEC.md` §Conformance; each sibling exists, is self-contained, and is listed in the root's `## Skill overlays`.
 
 ---
 
-<!-- agents-template-schema 1 -->
+<!-- agents-template-schema 2 -->
