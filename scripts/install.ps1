@@ -17,23 +17,12 @@
 #   powershell -NoProfile -File scripts\install.ps1 -Help                full usage help
 # Never overwrites an existing destination without confirmation. Prints a summary at the end.
 
-[CmdletBinding()]
-param(
-  [switch]$List,
-  [switch]$Global,
-  [string]$Harness,
-  [string]$Target,
-  [switch]$UpdateAgents,
-  [switch]$KiroSteering,
-  [switch]$AssumeYes,
-  [switch]$Help
-)
-
-$ErrorActionPreference = 'Stop'
-
 function Show-Help {
   @'
 Usage: scripts\install.ps1 [options]
+
+Both single-dash (-Flag) and double-dash (--Flag) styles are accepted,
+in every invocation style (-File call or in-session .\install.ps1 call).
 
 Install modes:
   (default)                      interactive harness selection, project-local install
@@ -57,18 +46,67 @@ On an already-initialized repo:
                                  .kiro/steering/.
 
 Flags:
-  -AssumeYes                     answer yes to all confirmations (non-interactive)
-  -Help                          show this help
+  -AssumeYes, (-y)               answer yes to all confirmations (non-interactive)
+  -Help, (--help)                show this help
 
 Never overwrites an existing destination without confirmation. Prints a summary at the end.
 '@ | Write-Host
 }
 
-if ($Help) { Show-Help; exit 0 }
-# In-session invocations bind a leading '--name' to $Harness in some engines (pwsh 7 positional).
-if ($Harness) {
-  if ($Harness.Trim('-') -eq 'help') { Show-Help; exit 0 }
+$ErrorActionPreference = 'Stop'
+
+# Manual argument parsing. Why: in-session invocations under Windows PowerShell 5.1
+# silently drop double-dashed tokens and turn their values into positionals during typed
+# param() binding; parsing $args directly accepts -Style and --Style everywhere.
+
+$List = $false; $Global = $false; $Harness = ''; $Target = ''
+$UpdateAgents = $false; $KiroSteering = $false; $AssumeYes = $false
+
+$Canonical = @{
+  l = 'list'; g = 'global'; h = 'harness'; t = 'target'; y = 'assumeyes'
+  list = 'list'; global = 'global'; harness = 'harness'; target = 'target'
+  updateagents = 'updateagents'; kirosteering = 'kirosteering'
+  assumeyes = 'assumeyes'; help = 'help'
 }
+$Valued = @{ harness = $true; target = $true }
+
+for ($i = 0; $i -lt $args.Count; $i++) {
+  $tok = [string]$args[$i]
+  $value = $null
+  $stripped = $tok.TrimStart('-')
+  # --flag=value / -flag=value — split on the original token so the value keeps its case
+  if ($stripped -match '^([A-Za-z]+)[=:](.*)$') {
+    $flag = $Matches[1].ToLower()
+    $value = $Matches[2]
+  } else {
+    $flag = $stripped.ToLower()
+  }
+  if ($Valued.ContainsKey($flag) -and -not $value) {
+    if ($i -lt $args.Count - 1 -and (([string]$args[$i + 1]).StartsWith('-') -eq $false)) {
+      $value = [string]$args[$i + 1]; $i++
+    } else {
+      Write-Host "Missing value for $tok"; Show-Help; exit 1
+    }
+  }
+
+  $key = $Canonical[$flag]
+  if (-not $key) {
+    Write-Host "Unknown argument: $tok"; Show-Help; exit 1
+  }
+
+  switch ($key) {
+    'list' { $List = $true }
+    'global' { $Global = $true }
+    'updateagents' { $UpdateAgents = $true }
+    'kirosteering' { $KiroSteering = $true }
+    'assumeyes' { $AssumeYes = $true }
+    'help' { Show-Help; exit 0 }
+    'harness' { $Harness = $value }
+    'target' { $Target = $value }
+  }
+}
+
+if ($Harness -and $Harness.Trim('-') -eq 'help') { Show-Help; exit 0 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
