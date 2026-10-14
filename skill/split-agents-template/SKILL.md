@@ -53,9 +53,12 @@ Ask only the gaps; group questions by the section they populate.
 3. Copy the template to `AGENTS.md`. Fill the frontmatter identity keys, stamp `generated` with the write date. Never touch the `agents-template-schema` key or the `## Reader contract (minimal)` section.
 4. Create only the siblings the project earns — `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.TOOLS.md`, `AGENTS.WORKTREES.md` — from the template's sibling templates, each with its frontmatter and review stamp. Fill a rule family only when it has real rules with reasons. Update `## Skill overlays` to list exactly the siblings that exist.
 5. **Kiro branch.** If `.kiro/` exists:
-   - Default: nothing further — Kiro loads `AGENTS.md` natively as always-on steering.
-   - Offer an optional `.kiro/steering/<project-slug>.md` for *on-demand* loading — the steering is about the project's concern (the idea being solved), not about this skill. Name and frontmatter come from the project: `name` = the project or concern slug, `description` = the one-line identity gathered in Phase 2 (what it solves, for whom, on what stack). Body: one line stating the concern plus `#[[file:AGENTS.md]]` so the full instructions load on mention. Include `inclusion: auto` if the user wants it always-on rather than on-demand.
-   - Never write `product.md`, `tech.md`, or `structure.md`. Never touch existing steering files.
+   - Default: nothing further — Kiro loads `AGENTS.md` natively (always-on; inclusion modes unsupported there).
+   - Offer concern steering — steering **describes the project being solved**: what it is, who it serves, which stack. Never about this skill, never a redirect.
+     - `product.md` — default `inclusion: always`. The concern itself: what the project solves, its users, its goals — from the identity gathered above. One screen max.
+     - One port steering file per sibling the project earned — `.kiro/steering/<topic>.md` for each `AGENTS.<TOPIC>.md` — because Kiro only loads files named `AGENTS.md` and would never see the siblings. Frontmatter fits the domain (`inclusion: auto` + task-matching `name`/`description`, or `fileMatch` + `fileMatchPattern` on the domain's paths — e.g. worktrees → `.worktrees/**`). Body: one line naming the trigger plus `#[[file:AGENTS.<TOPIC>.md]]` — a live reference, so Kiro loads the canonical sibling with no duplication.
+   - `tech.md` and `structure.md`: offer only on request — the same facts are already always-on in `AGENTS.md` (§Build/commands, §Repo anatomy); duplicating them costs context every turn.
+   - Never copy a sibling's content inline into steering; reference it. Never touch existing steering files.
 6. **Verify conformance** against `assets/AGENTS-SPEC.md` §Conformance. Any failure → abort, surface the checks, write nothing non-conformant.
 7. **Present** the full populated file; require explicit user approval before committing. The skill never commits.
 8. **Next steps.** BMAD → run `bmad-project-context`. GSD-core → run `gsd-onboard`. openspec → run `openspec init`. Confirm each adopted overlay's pointer.
