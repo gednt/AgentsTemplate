@@ -255,7 +255,7 @@ mode: primary
 ## MCP servers
 
 - **<server-name>** — <one-line role>. <Install/config location>.
-- New servers are added by the user, not the agent. Why: servers grant tool capabilities; silent additions surprise the user.
+- New servers are added on the user's request — by the user, or by the agent when the user asks. Never added unprompted. Why: servers grant tool capabilities; silent additions surprise the user.
 ```
 
 ---
