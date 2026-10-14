@@ -88,6 +88,7 @@ Load only when the task touches the overlay's domain.
 
 - **AGENTS.POLICY** — `AGENTS.POLICY.md`. Hard policy and prohibitions. Load before any non-trivial change.
 - **AGENTS.STACK** — `AGENTS.STACK.md`. Stack identity and per-language conventions. Load before touching code in the corresponding language.
+- **AGENTS.TOOLS** — `AGENTS.TOOLS.md`. Agent tooling: dev environment, UI validation, MCP servers. Load before running the app, validating UI, or adding tool integrations.
 - **AGENTS.WORKTREES** — `AGENTS.WORKTREES.md`. Git worktree ceremony. Load before any commit, branch, or merge.
 - **<other overlays>** — `<paths>`. <one-line role + load trigger>.
 
@@ -215,6 +216,40 @@ mode: primary
 ## Agent workflow conventions
 
 - <Concurrency budget, post-task verification pointer, pre-commit review gate.>
+```
+
+---
+
+## Sibling template: `AGENTS.TOOLS.md`
+
+Create when the project's agent tooling — dev environment, UI validation, MCP servers — has real choices a fresh agent must follow. Skip when there is nothing binding to say.
+
+```markdown
+---
+agents-template-schema: 4
+description: "Agent tooling: development environment, UI validation, MCP servers. Load before running the app, validating UI changes, or adding tool integrations."
+allowed-tools: [Read, Grep, Glob, Bash(<dev/validate/docker commands>)]
+mode: primary
+---
+
+<!-- Last reviewed: YYYY-MM-DD against <reference> -->
+
+# Agent Tooling — <project>
+
+## Development environment
+
+- **Run the app:** <locally / Docker Compose — canonical command>. Why: <one reason>
+- **Never** <e.g. rebuild containers mid-task, run against production data>. Why: <one reason>
+
+## UI validation
+
+- **Every UI change is validated before reporting done:** <Playwright MCP / other harness / manual hand-off to the user — the exact procedure>. Why: <one reason>
+- <Where evidence goes: screenshot/trace path, test command, or the hand-off steps.>
+
+## MCP servers
+
+- **<server-name>** — <one-line role>. <Install/config location>.
+- New servers are added by the user, not the agent. Why: servers grant tool capabilities; silent additions surprise the user.
 ```
 
 ---

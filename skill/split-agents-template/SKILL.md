@@ -26,7 +26,7 @@ Onboarding procedure for the `agents-template-schema` (schema 4). Flow: Detect �
 3. **Commands.** Map build / test / dev from `package.json` scripts, Cargo, `pyproject.toml` + pytest/Makefile, CI workflows, compose files. Prefer the most specific source. Confirm with the user.
 4. **Existing `AGENTS.md`.** Conformant (frontmatter integer schema key + `## Reader contract (minimal)` obligations in order) → offer *refresh in place* (default) or *archive and rewrite*. Legacy (HTML schema markers or missing key) → offer *archive and rewrite* with frontmatter migration (default: rewrite).
 5. **Kiro.** If `.kiro/` exists, set Kiro mode (Phase 3, step 5).
-6. **Skills directories.** Note installed skill dirs — they can signal adopted overlays.
+6. **Skills and MCP.** Note installed skill dirs — they can signal adopted overlays. Read the MCP configs (`opencode.json`, `mcp.json`, `.claude/settings.json`, and the like) for existing servers — Phase 2 confirms them instead of re-asking.
 
 ## Phase 2 — Interview
 
@@ -40,13 +40,18 @@ Ask only the gaps; group questions by the section they populate.
 - **Overlays:** confirm detected ones (impeccable → `PRODUCT.md` + `DESIGN.md`; agents-template → the schema artifacts).
 - **Languages:** defaults or per-language overrides (overrides go to `AGENTS.STACK.md`).
 - **Catch-alls:** only conventions that differ from defaults. If none, omit the section.
+- **Tooling (ask at the end of the interview; answers populate `AGENTS.TOOLS.md`):**
+  - **Development environment:** run the app locally or in Docker Compose (offer what detection found). Include one environment rule with a why — e.g. never rebuild containers mid-task.
+  - **UI validation:** how a UI change is proven before "done" — Playwright MCP, another browser harness, screenshots committed to a path, or manual hand-off to the user. Record the exact procedure.
+  - **MCP servers:** which servers the agent should have. Offer the ones detected, plus common picks the project's stack warrants (e.g. Playwright for any UI). Record each server's role and its install/config location. Do not install or configure any server yourself.
+  - Skip the sibling when the project earns none: no runtime to launch, no UI to validate, no MCP to record.
 
 ## Phase 3 — Write
 
 1. Locate `assets/AGENTS-TEMPLATE.md` relative to this skill. Missing → abort with: "`assets/AGENTS-TEMPLATE.md` not found — install this skill folder intact."
 2. If `AGENTS.md` exists, archive it first as `AGENTS.md.<slug>.bak` (slug: project name, else date). If that bak exists, abort and ask the user to resolve. Record the archived path in the transcript.
 3. Copy the template to `AGENTS.md`. Fill the frontmatter identity keys, stamp `generated` with the write date. Never touch the `agents-template-schema` key or the `## Reader contract (minimal)` section.
-4. Create only the siblings the project earns — `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md` — from the template's sibling templates, each with its frontmatter and review stamp. Fill a rule family only when it has real rules with reasons. Update `## Skill overlays` to list exactly the siblings that exist.
+4. Create only the siblings the project earns — `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.TOOLS.md`, `AGENTS.WORKTREES.md` — from the template's sibling templates, each with its frontmatter and review stamp. Fill a rule family only when it has real rules with reasons. Update `## Skill overlays` to list exactly the siblings that exist.
 5. **Kiro branch.** If `.kiro/` exists:
    - Default: nothing further — Kiro loads `AGENTS.md` natively as always-on steering.
    - Offer an optional `.kiro/steering/split-agents-template.md` for *on-demand* loading: frontmatter `inclusion: auto` with `name`/`description`, body one line plus `#[[file:AGENTS.md]]`.
@@ -58,7 +63,7 @@ Ask only the gaps; group questions by the section they populate.
 ## Does not
 
 - Write other overlays' artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`, `PRODUCT.md`, `DESIGN.md`).
-- Install tools or packages. It writes the file that tells an agent which tools are in use.
+- Install tools, packages, or MCP servers. It writes the file that tells an agent which tools are in use; installing and configuring them is the user's job.
 - Commit, or delete `.bak` archives. Both are the user's job.
 
 ## Re-running
