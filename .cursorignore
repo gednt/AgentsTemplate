@@ -1,0 +1,11 @@
+# Generated vendor folders are installer output — Cursor must skip them for AI features and indexing.
+.claude/
+.opencode/
+.codex/
+.agents/
+.cursor/
+.gemini/
+.agent/
+.github/
+.kiro/
+.worktrees/

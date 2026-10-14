@@ -1,0 +1,12 @@
+# Generated vendor folders are installer output — Kiro must not read or index them.
+# Note: Kiro cannot re-include a file whose parent directory is ignored.
+.claude/
+.opencode/
+.codex/
+.agents/
+.cursor/
+.gemini/
+.agent/
+.github/
+.kiro/
+.worktrees/

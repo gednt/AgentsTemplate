@@ -1,0 +1,14 @@
+# Vendor wrappers are generated installer output, never committed.
+# Canonical skills live under skill/<name>/ — see skill/split-agents-template/assets/AGENTS-SPEC.md §Distribution.
+.claude/
+.opencode/
+.codex/
+.agents/
+.cursor/
+.gemini/
+.agent/
+.github/
+.kiro/
+
+# Worktrees
+.worktrees/
