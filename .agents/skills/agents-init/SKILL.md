@@ -5,7 +5,7 @@ description: Scaffold or refresh an `AGENTS.md` for any project, against the `ag
 
 # agents-init
 
-A one-shot onboarding skill for the universal `AGENTS.md` schema (version 2). Runs in any repository, in any language, with or without an existing planning workflow.
+A one-shot onboarding skill for the universal `AGENTS.md` schema (version 3). Runs in any repository, in any language, with or without an existing planning workflow.
 
 The skill does three things, in order:
 
@@ -76,11 +76,11 @@ If multiple sources are present, prefer the most specific (project script file o
 
 Read the file if present. Test for schema conformity:
 
-- Header comment `<!-- agents-template-schema <N> -->` in the first 20 lines.
-- Footer comment with the **same** `N` in the last 5 lines.
+- The file's first content is a `---`-delimited YAML frontmatter block carrying an integer `agents-template-schema: 3`.
+- No legacy `<!-- agents-template-schema ... -->` HTML header/footer markers (schema 1–2); their presence marks the file legacy.
 - The obligations in `## Reader contract (minimal)` present in order.
 
-If the file is conformant, the skill offers two paths: (a) **refresh in place** — re-run detection, update only changed sections, preserve the user's prose; (b) **archive and rewrite** — move to `AGENTS.md.<original-name>.bak` and write a fresh conformant file. The default is (a) for conformant files, (b) for non-conformant files, and (b) when the file is written against an older schema.
+If the file is conformant, the skill offers two paths: (a) **refresh in place** — re-run detection, update only changed sections, preserve the user's prose; (b) **archive and rewrite** — move to `AGENTS.md.<original-name>.bak` and write a fresh conformant file. The default is (a) for conformant files and (b) for non-conformant, legacy (HTML markers), or key-less files — a legacy file is migrated to schema 3 with frontmatter.
 
 ### Existing workflow signals
 
@@ -159,14 +159,15 @@ Take the interview answers + the detected facts and write `AGENTS.md`.
    - If the existing file's name is exactly `AGENTS.md`, rename to `AGENTS.md.<detected-or-archive-suffix>.bak`. The suffix is the project's slugified name (e.g., `AGENTS.md.bookingexperience-bak`) or a timestamp (`AGENTS.md.2026-09-11.bak`) if no project name is available.
    - Record the archived path in the skill's transcript so the user can recover.
 
-3. **Replace placeholders.** Walk the template's `Project`, `Repo anatomy`, `Build, test, and development commands`, `Policy`, `Skill overlays`, `Language conventions`, `Conventions that differ from defaults` sections and replace their `<...>` placeholders with the collected values. Leave untouched:
-   - The schema header and footer comments.
+3. **Replace placeholders and populate frontmatter.** Fill the generated files' frontmatter first — replace `project`, `description`, and `language` with the interview answers, stamp `generated` with the write date, and leave the `agents-template-schema: 3` key untouched. Then walk the template's `Project`, `Repo anatomy`, `Build, test, and development commands`, `Policy`, `Skill overlays`, `Language conventions`, `Conventions that differ from defaults` sections and replace their `<...>` placeholders with the collected values. Leave untouched:
+   - The `agents-template-schema` key.
    - The `## Reader contract (minimal)` section.
 
-   The canonical template is the **split edition**: heavy content lives in sibling `AGENTS.<TOPIC>.md` files (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`), written from the template's sibling templates with the frontmatter (`description`, `allowed-tools`, `mode: primary`) and review stamp filled in. The root keeps headline lines for every rule family. Create only the siblings the project earns — if the whole policy fits in one line, drop the `AGENTS.POLICY.md` sibling, keep the pointer out of `## Skill overlays`, and leave the root's placeholder sentence per the template. Then update the root's `## Skill overlays` to list exactly the siblings that exist.
+   The canonical template is the **split edition**: heavy content lives in sibling `AGENTS.<TOPIC>.md` files (`AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`), written from the template's sibling templates with their frontmatter (`agents-template-schema: 3`, `description`, `allowed-tools`, `mode: primary`) and review stamp filled in. The root keeps headline lines for every rule family. Create only the siblings the project earns — if the whole policy fits in one line, drop the `AGENTS.POLICY.md` sibling, keep the pointer out of `## Skill overlays`, and leave the root's placeholder sentence per the template. Then update the root's `## Skill overlays` to list exactly the siblings that exist.
 
 4. **Verify conformance.** Apply the conformance checklist from `AGENTS-SPEC.md`:
-   - Header and footer `<!-- agents-template-schema <N> -->` markers present, same `N` in both.
+   - The root's first content is a `---`-delimited YAML frontmatter block carrying integer `agents-template-schema: 3` plus the identity keys (`project`, `description`, `language`, `generated`, `mode: primary`).
+   - Every sibling carries the same `agents-template-schema: 3` key in its own frontmatter, with its two-part `description` and `mode: primary`.
    - `## Reader contract (minimal)` carries the obligations in order.
    - Every `## Skill overlays` pointer resolves to an existing file or directory.
 
@@ -249,8 +250,8 @@ A downstream project MUST NOT modify the canonical skill body. If a project need
 
 **Outputs:**
 
-- `AGENTS.md` — populated, conformant, replacing or newly created.
-- `AGENTS.<TOPIC>.md` — the project's sibling specification files (policy, stack, worktrees, ...), created from the template's sibling templates as needed.
+- `AGENTS.md` — populated, conformant, schema-3 frontmatter, replacing or newly created.
+- `AGENTS.<TOPIC>.md` — the project's sibling specification files (policy, stack, worktrees, ...), created from the template's sibling templates as needed, each carrying the schema-3 frontmatter.
 - `AGENTS.md.<suffix>.bak` — the previous `AGENTS.md`, if any. Never overwritten; if a bak with the same suffix exists, the skill aborts and asks the user to resolve manually.
 - A short transcript (printed to the conversation, not written to disk) listing the detected facts, the interview answers, the conformance check results, and the next steps the user should run.
 
