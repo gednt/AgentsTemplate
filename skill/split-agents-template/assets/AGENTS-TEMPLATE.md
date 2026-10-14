@@ -222,7 +222,7 @@ mode: primary
 
 ## Sibling template: `AGENTS.TOOLS.md`
 
-Create when the project's agent tooling — dev environment, UI validation, MCP servers — has real choices a fresh agent must follow. Skip when there is nothing binding to say. Shape the rules after the ControlEasy Reborn worked example: Docker-only development and a validation gate with CI parity.
+Create when the project's agent tooling — dev environment, UI validation, MCP servers — has real choices a fresh agent must follow. Skip when there is nothing binding to say. The rules encode two disciplines: Docker-only development, and UI validation as a gate with CI parity.
 
 ```markdown
 ---
