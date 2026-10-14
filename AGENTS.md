@@ -1,13 +1,15 @@
 ---
-description: "AgentsTemplate — vendor-neutral AGENTS.md schema (schema 2). Thin index per the split template; load sibling overlays only when the task touches their domain."
+agents-template-schema: 3
+project: "AgentsTemplate"
+description: "Vendor-neutral agent-instructions schema (schema 3). Thin index per the split template; load sibling overlays only when the task touches their domain."
+language: en
+generated: 2026-10-13
 mode: primary
 ---
 
-<!-- agents-template-schema 2 -->
-
 # AGENTS.md
 
-> Worked example of the universal `AGENTS.md` schema, version 2. Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own; the structure and markers stay.
+> Worked example of the universal `AGENTS.md` schema, version 3. Downstream projects copy `AGENTS-TEMPLATE.md` into their repository as `AGENTS.md` and replace the example content with their own; the frontmatter keys and markers stay.
 
 Heavy content lives in sibling files under `## Skill overlays`; load them only when the task touches that domain.
 
@@ -65,8 +67,4 @@ None. Plain Markdown; downstream projects add a `### <Language>` subsection per 
 
 - No preprocessing, includes, or templating — the template is copied verbatim, not transpiled.
 - Header line numbering in `AGENTS-SPEC.md` is intentional (sections are cited by number, e.g. `AGENTS-SPEC.md §5`); do not strip it.
-- Schema markers (`<!-- agents-template-schema N -->`) appear both in the first 20 lines and in the footer (agents that read partial files need both).
-
----
-
-<!-- agents-template-schema 2 -->
+- The schema version is declared once in YAML frontmatter (`agents-template-schema: 3`) on the root and every sibling; the schema 1–2 HTML header/footer markers are legacy input and are not written.

@@ -1,4 +1,5 @@
 ---
+agents-template-schema: 3
 description: "Mandatory Git worktree rules for AgentsTemplate: all Git work happens in a worktree under .worktrees/, never commit/branch/push/merge on main; the agent reports done and the human merges. Load before any commit, branch, or merge."
 allowed-tools: [Read, Grep, Glob, Bash(git status *), Bash(git log *), Bash(git diff *), Bash(git show *), Bash(git show-ref *), Bash(git worktree *), Bash(git branch --list *)]
 mode: primary
