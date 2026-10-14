@@ -54,7 +54,7 @@ Ask only the gaps; group questions by the section they populate.
 4. Create only the siblings the project earns — `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.TOOLS.md`, `AGENTS.WORKTREES.md` — from the template's sibling templates, each with its frontmatter and review stamp. Fill a rule family only when it has real rules with reasons. Update `## Skill overlays` to list exactly the siblings that exist.
 5. **Kiro branch.** If `.kiro/` exists:
    - Default: nothing further — Kiro loads `AGENTS.md` natively as always-on steering.
-   - Offer an optional `.kiro/steering/split-agents-template.md` for *on-demand* loading: frontmatter `inclusion: auto` with `name`/`description`, body one line plus `#[[file:AGENTS.md]]`.
+   - Offer an optional `.kiro/steering/<project-slug>.md` for *on-demand* loading — the steering is about the project's concern (the idea being solved), not about this skill. Name and frontmatter come from the project: `name` = the project or concern slug, `description` = the one-line identity gathered in Phase 2 (what it solves, for whom, on what stack). Body: one line stating the concern plus `#[[file:AGENTS.md]]` so the full instructions load on mention. Include `inclusion: auto` if the user wants it always-on rather than on-demand.
    - Never write `product.md`, `tech.md`, or `structure.md`. Never touch existing steering files.
 6. **Verify conformance** against `assets/AGENTS-SPEC.md` §Conformance. Any failure → abort, surface the checks, write nothing non-conformant.
 7. **Present** the full populated file; require explicit user approval before committing. The skill never commits.
