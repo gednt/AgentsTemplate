@@ -40,11 +40,11 @@ Ask only the gaps; group questions by the section they populate.
 - **Overlays:** confirm detected ones (impeccable → `PRODUCT.md` + `DESIGN.md`; agents-template → the schema artifacts).
 - **Languages:** defaults or per-language overrides (overrides go to `AGENTS.STACK.md`).
 - **Catch-alls:** only conventions that differ from defaults. If none, omit the section.
-- **Tooling (ask at the end of the interview; answers populate `AGENTS.TOOLS.md`):**
-  - **Development environment:** run the app locally or in Docker Compose (offer what detection found). Include one environment rule with a why — e.g. never rebuild containers mid-task.
-  - **UI validation:** how a UI change is proven before "done" — Playwright MCP, another browser harness, screenshots committed to a path, or manual hand-off to the user. Record the exact procedure.
-  - **MCP servers:** which servers the agent should have. Offer the ones detected, plus common picks the project's stack warrants (e.g. Playwright for any UI). Record each server's role and its install/config location. Do not install or configure any server yourself.
-  - Skip the sibling when the project earns none: no runtime to launch, no UI to validate, no MCP to record.
+- **Tooling — always ask the user; these are preferences, not repo gaps (answers populate `AGENTS.TOOLS.md`):**
+  - **Development environment:** ask how the user wants to develop — locally or in Docker. Offer what detection found; if none exists, ask open-ended ("How do you want to run the project — locally or in Docker?"). Include one environment rule with a why — e.g. never rebuild containers mid-task.
+  - **UI validation:** ask how the user wants to validate UI changes — Playwright MCP, another browser harness, screenshots committed to a path, or manual hand-off to the user. If detection found nothing, ask open-ended. Record the exact procedure.
+  - **MCP servers:** ask which MCP servers the user wants installed. Offer the ones detected, plus common picks the project's stack warrants (e.g. Playwright for any UI); if none exists, ask open-ended. Record each server's role and its install/config location. Do not install or configure any server yourself.
+  - Do not skip these questions when detection found nothing — that is when they matter most. The sibling stays unwritten only if the user answers "none" to all three.
 
 ## Phase 3 — Write
 
