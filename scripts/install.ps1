@@ -7,7 +7,7 @@
 #   powershell -NoProfile -File scripts\install.ps1                      interactive harness selection
 #   powershell -NoProfile -File scripts\install.ps1 -List                list supported harnesses (* = detected)
 #   powershell -NoProfile -File scripts\install.ps1 -Harness kiro,claude-code
-#   powershell -NoProfile -File scripts\install.ps1 -Target <repo>       project-local target repo (default prompts; "." = this repo)
+#   powershell -NoProfile -File scripts\install.ps1 -Target <repo>       project-local target repo (default prompts; blank = repo root)
 #   powershell -NoProfile -File scripts\install.ps1 -Global              install to home paths instead of project-local
 #   powershell -NoProfile -File scripts\install.ps1 -UpdateAgents [-Target <repo>] [-AssumeYes]
 #                                                                        sync every initialized copy of this skill to the canonical folder
@@ -41,7 +41,7 @@ Install modes:
   -Harness <names>               install to harnesses by name or list number, comma-separated
                                  (e.g. kiro,claude-code or 2,9)
   -Global                        install to home paths instead of project-local
-  -Target <repo>                 project-local target repo (default prompts; "." = this repo)
+  -Target <repo>                 project-local target repo (default prompts; blank = this repo's root)
 
 On an already-initialized repo:
   -UpdateAgents [-Target <repo>] [-AssumeYes]
@@ -65,6 +65,10 @@ Never overwrites an existing destination without confirmation. Prints a summary 
 }
 
 if ($Help) { Show-Help; exit 0 }
+# In-session invocations bind a leading '--name' to $Harness in some engines (pwsh 7 positional).
+if ($Harness) {
+  if ($Harness.Trim('-') -eq 'help') { Show-Help; exit 0 }
+}
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
@@ -200,8 +204,8 @@ function Install-One {
 if ($UpdateAgents -and $KiroSteering) { Write-Error "Choose one mode: -UpdateAgents or -KiroSteering, not both."; exit 1 }
 
 if ($UpdateAgents) {
-  if (-not $Target) { $Target = Read-Host 'Target repo path (blank = current dir)' }
-  if (-not $Target) { $Target = '.' }
+  if (-not $Target -or $Target -eq '.') { $Target = Read-Host 'Target repo path (blank = repo root)' }
+  if (-not $Target) { $Target = $RepoRoot }
   $Root = (Resolve-Path $Target).Path
   $Copies = New-Object System.Collections.Generic.List[object]
   foreach ($H in $Harnesses) {
@@ -249,8 +253,8 @@ if ($UpdateAgents) {
 # --- mode: generate Kiro steering ---------------------------------------------
 
 if ($KiroSteering) {
-  if (-not $Target) { $Target = Read-Host 'Target repo path (blank = current dir)' }
-  if (-not $Target) { $Target = '.' }
+  if (-not $Target -or $Target -eq '.') { $Target = Read-Host 'Target repo path (blank = repo root)' }
+  if (-not $Target) { $Target = $RepoRoot }
   $Root = (Resolve-Path $Target).Path
   $AgentsMd = Join-Path $Root 'AGENTS.md'
   if (-not (Test-Path $AgentsMd)) { Write-Error "No AGENTS.md at $Root — steering is written for an initialized repo."; exit 1 }
@@ -370,8 +374,8 @@ $ScopeRoot = $null
 if (-not $Global) {
   Write-Host 'Scope: project-local. Skills are source for agents: COMMIT the installed folder, do not gitignore it'
   Write-Host '(Codex, Antigravity, and Kiro honor ignore rules and will not see ignored skills).'
-  if (-not $Target -or $Target -eq '.') { $Target = Read-Host 'Target repo path (blank = current dir)' }
-  if (-not $Target) { $Target = '.' }
+  if (-not $Target -or $Target -eq '.') { $Target = Read-Host 'Target repo path (blank = repo root)' }
+  if (-not $Target) { $Target = $RepoRoot }
   $ScopeRoot = (Resolve-Path $Target).Path
   $GitIgnore = Join-Path $ScopeRoot '.gitignore'
   if ((Test-Path $GitIgnore) -and (Select-String -Path $GitIgnore -Pattern '^\s*\W*(claude|kiro|codex)/skills' -Quiet)) {

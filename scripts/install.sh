@@ -152,7 +152,7 @@ Install modes:
   --harness <names>, -h <names>   install to harnesses by name or list number, comma-separated
                                   (e.g. kiro,claude-code or 2,9)
   --global, -g                    install to home paths instead of project-local
-  --target <repo>, -t <repo>      project-local target repo (default prompts; "." = this repo)
+  --target <repo>, -t <repo>      project-local target repo (default prompts; blank = this repo's root)
 
 On an already-initialized repo:
   --update-agents [-t <repo>] [-y]
@@ -311,7 +311,7 @@ description: \"$d\""
 }
 
 if (( UPDATE_AGENTS || KIRO_STEERING )); then
-  TARGET="$(resolve_target "${TARGET:-.}")"
+  TARGET="$(resolve_target "${TARGET:-$HERE}")"
   if (( UPDATE_AGENTS )); then update_agents "$TARGET"; else kiro_steering "$TARGET"; fi
   exit 0
 fi
@@ -348,8 +348,8 @@ else
   echo "Scope: project-local. Skills are source for agents: COMMIT the installed folder, do not gitignore it"
   echo "(Codex, Antigravity, and Kiro honor ignore rules and will not see ignored skills)."
   if [[ -z "$TARGET" ]]; then
-    read -r -p "Target repo path (blank = current dir): " TARGET
-    TARGET="${TARGET:-.}"
+    read -r -p "Target repo path (blank = repo root): " TARGET
+    TARGET="${TARGET:-$HERE}"
   fi
   if command -v cygpath >/dev/null 2>&1 && [[ "$TARGET" =~ ^[A-Za-z]: ]]; then
     TARGET="$(cygpath -u "$TARGET")"
