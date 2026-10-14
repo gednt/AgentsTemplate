@@ -1,4 +1,4 @@
-# scripts/install.ps1 — install the split-agents-template skill into your agent harness.
+﻿# scripts/install.ps1 — install the split-agents-template skill into your agent harness.
 #
 # The skill folder (skill/split-agents-template/) is copied verbatim, Agent Skills standard.
 # Flat-file slash-command dispatchers are generated for harnesses that use them.

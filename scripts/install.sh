@@ -109,8 +109,8 @@ install_one() {
         SKIPPED+=("$sp")
       fi
     fi
-    [[ "$NAME" == "hermes" ]] && echo "  note: run 'hermes skills trust' once in this project to allow auto-load."
-    return
+    if [[ "$NAME" == "hermes" ]]; then echo "  note: run 'hermes skills trust' once in this project to allow auto-load."; fi
+    return 0
   else
     echo "  note: $NAME has no skills path; skipped entirely."
     SKIPPED+=("$NAME (no skills path)"); return
@@ -135,8 +135,8 @@ install_one() {
     fi
   fi
 
-  [[ "$NAME" == "hermes" ]] && echo "  note: run 'hermes skills trust' once in this project to allow auto-load."
-  [[ "$NAME" == "veto" ]] && echo "  note: Veto discourages project-local installs; installed to the home path."
+  if [[ "$NAME" == "hermes" ]]; then echo "  note: run 'hermes skills trust' once in this project to allow auto-load."; fi
+  if [[ "$NAME" == "veto" ]]; then echo "  note: Veto discourages project-local installs; installed to the home path."; fi
 }
 
 # --- flags -------------------------------------------------------------------
@@ -188,6 +188,13 @@ else
     read -r -p "Target repo path (blank = current dir): " TARGET
     TARGET="${TARGET:-.}"
   fi
+  if command -v cygpath >/dev/null 2>&1 && [[ "$TARGET" =~ ^[A-Za-z]: ]]; then
+    TARGET="$(cygpath -u "$TARGET")"
+  fi
+  if [[ ! -d "$TARGET" ]]; then
+    echo "error: target repo not found: $TARGET" >&2
+    exit 1
+  fi
   TARGET="$(cd "$TARGET" && pwd)"
   if grep -qiE '^\s*(\.|/)?(claude|kiro|codex|agents)/skills' "$TARGET/.gitignore" 2>/dev/null; then
     echo "  WARNING: $TARGET/.gitignore ignores a skills path — installed skills may stay invisible to some harnesses."
@@ -199,14 +206,23 @@ fi
 IFS=',' read -r -a CHOSEN <<< "$PICK"
 for c in "${CHOSEN[@]}"; do
   c="${c//[[:space:]]/}"
+  row=""
   if [[ "$c" =~ ^[0-9]+$ ]]; then
     idx=$((c-1))
     if [[ $idx -lt 0 || $idx -ge ${#HARNESSES[@]} ]]; then
       echo "error: number out of range: $c (see --list)" >&2; exit 1
     fi
-    fields "${HARNESSES[$idx]}"; c="$NAME"
+    row="${HARNESSES[$idx]}"
+  else
+    for r in "${HARNESSES[@]}"; do
+      fields "$r"
+      if [[ "$NAME" == "$c" ]]; then row="$r"; break; fi
+    done
+    if [[ -z "$row" ]]; then
+      echo "error: unknown harness '$c' (see --list)" >&2; exit 1
+    fi
   fi
-  if [[ "$GLOBAL" == "1" ]]; then install_one "$c" global ""; else install_one "$c" local "$TARGET"; fi
+  if [[ "$GLOBAL" == "1" ]]; then install_one "$row" global ""; else install_one "$row" local "$TARGET"; fi
 done
 
 echo
