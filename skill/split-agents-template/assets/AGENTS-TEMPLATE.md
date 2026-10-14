@@ -222,7 +222,7 @@ mode: primary
 
 ## Sibling template: `AGENTS.TOOLS.md`
 
-Create when the project's agent tooling — dev environment, UI validation, MCP servers — has real choices a fresh agent must follow. Skip when there is nothing binding to say.
+Create when the project's agent tooling — dev environment, UI validation, MCP servers — has real choices a fresh agent must follow. Skip when there is nothing binding to say. Shape the rules after the ControlEasy Reborn worked example: Docker-only development and a validation gate with CI parity.
 
 ```markdown
 ---
@@ -238,13 +238,19 @@ mode: primary
 
 ## Development environment
 
-- **Run the app:** <locally / Docker Compose — canonical command>. Why: <one reason>
-- **Never** <e.g. rebuild containers mid-task, run against production data>. Why: <one reason>
+- **Docker-only execution.** All build/test/run commands execute inside containers; <`docker` CLI> is the only host requirement. Never install <project toolchain: SDK, runtimes, package managers> on the host. Why: dev runs match CI image-for-image; the host stays clean.
+- **Dev shell:** <devcontainer path / named container>. The host shell is for read-only inspection only. Why: <one reason>
+- **Run the app:** <canonical command, e.g. `docker compose -f docker/docker-compose.yml up -d --build`>.
+- **Per-worktree isolation:** <Compose project name `-p <prefix>-<branch-hyphens>` / local ports file>. Why: two worktrees must never share containers, networks, or volumes.
+- **No host-side tool installation** (`apt`, `brew`, `choco`, `winget`, `npm i -g`, `dotnet tool install -g`, ...). A missing tool with the container runtime down → surface the dependency to the user and stop; do not start Docker on their behalf. Why: silent host installs drift from CI.
+- **Docker-pulling stages (image downloads, container builds) run once at task completion, not per turn.** Why: they dominate turn time.
 
 ## UI validation
 
-- **Every UI change is validated before reporting done:** <Playwright MCP / other harness / manual hand-off to the user — the exact procedure>. Why: <one reason>
-- <Where evidence goes: screenshot/trace path, test command, or the hand-off steps.>
+- **Every change under <UI path(s)> is validated before reporting "done":** <exact procedure — e.g. smoke-test the running SPA with the webapp-testing skill / Playwright MCP; then run the UI test gate>. Contributor responsibility, not auto-invoked. Why: UI regressions ship silently otherwise.
+- **Canonical recipe — bit-for-bit parity with CI** <name the job>; its pass condition: <exact observable, e.g. exit 0 + summary grep, no FAILED lines>.
+- **Fallbacks, in priority order, only when the canonical recipe cannot run:** <devcontainer-direct / host-direct / invoke-otherwise> — each marked as *not* equivalent; always run the canonical recipe before pushing. No "done" claim with the gate unverified.
+- <Where evidence goes: screenshot/trace path, log location.>
 
 ## MCP servers
 
