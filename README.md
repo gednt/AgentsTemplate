@@ -16,6 +16,7 @@ Every AI coding harness (Claude Code, Cursor, Codex, Gemini CLI, Antigravity, Gi
 
 Concretely the schema introduces:
 
+- **Frontmatter versioning** — every generated file (root and siblings) declares its schema version in YAML frontmatter (`agents-template-schema: 3`); the schema 1–2 HTML header/footer markers are legacy input.
 - **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md`) that an agent reads lazily when its task touches the overlay's domain. Adopted tools and workflows — BMAD, GSD-core, openspec, impeccable — integrate as overlays.
 - **Freshness stamps** — `<!-- Last reviewed: YYYY-MM-DD against <reference> -->` markers on sibling specification files that let an agent detect stale context without erroring.
 - **A conformance contract** — a short checklist any `AGENTS.md` must pass to be called conformant.
@@ -44,7 +45,7 @@ The installer never overwrites an existing wrapper without confirmation and prin
 
 ## Schema version
 
-The shipped artifacts conform to `agents-spec-schema 2` and `agents-template-schema 2`. The two version numbers move together: bumping either is a breaking change to the contract.
+The shipped artifacts conform to `agents-spec-schema 3` and `agents-template-schema 3`. The two version numbers move together: bumping either is a breaking change to the contract.
 
 ## License
 
