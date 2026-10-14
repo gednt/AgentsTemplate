@@ -220,10 +220,10 @@ This repository ships thin wrappers for the seven most popular harnesses. The wr
 | Claude Code        | `.claude/commands/agents-init.md`                   | Slash command          |
 | OpenCode           | `.opencode/command/agents-init.md`                  | Slash command          |
 | Codex (slash)      | `.codex/prompts/agents-init.md`                     | Slash command          |
-| Codex (skill)      | `.agents/skills/agents-init/SKILL.md`               | Skill auto-discovery   |
+| Codex (skill)      | `.agents/skills/skill/split-agents-template/SKILL.md`               | Skill auto-discovery   |
 | Cursor (slash)     | `.cursor/commands/agents-init.md`                   | Slash command          |
 | Gemini CLI         | `.gemini/commands/agents-init.toml`                 | Slash command (TOML)   |
-| Antigravity        | `.agent/skills/agents-init/SKILL.md`                | Skill auto-discovery   |
+| Antigravity        | `.agent/skills/skill/split-agents-template/SKILL.md`                | Skill auto-discovery   |
 | GitHub Copilot     | `.github/prompts/agents-init.prompt.md`             | Prompt file            |
 
 Slash-command wrappers are short: frontmatter + a one-line pointer to this file. Skill auto-discovery wrappers are copies of this file (the harness expects to find `SKILL.md` at the canonical path).
@@ -236,9 +236,9 @@ For harnesses not in the in-repo list, run `scripts/install.sh` (POSIX) or `scri
 
 A downstream project that adopts the agents-template overlay:
 
-1. Vendors `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`, and `agents-init/SKILL.md` into the repo root.
+1. Vendors `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`, and `skill/split-agents-template/SKILL.md` into the repo root.
 2. Either ships the in-repo vendor wrappers for the user's harness, OR runs the installer, OR copies the wrapper that matches the user's harness.
-3. Adds a pointer in the project's `## Skill overlays` section: `- **agents-template** — AGENTS-TEMPLATE.md, AGENTS-SPEC.md, agents-init/SKILL.md`.
+3. Adds a pointer in the project's `## Skill overlays` section: `- **agents-template** — AGENTS-TEMPLATE.md, AGENTS-SPEC.md, skill/split-agents-template/SKILL.md`.
 
 A downstream project MUST NOT modify the canonical skill body. If a project needs custom onboarding behavior, it ships its own skill under its own overlay and points at that instead.
 

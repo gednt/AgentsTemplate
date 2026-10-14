@@ -1,6 +1,6 @@
-<!-- agents-spec-schema 3 -->
+<!-- agents-spec-schema 4 -->
 
-# AGENTS-SPEC.md — Reader Contract for `AGENTS.md` (v3)
+# AGENTS-SPEC.md — Reader Contract for `AGENTS.md` (v4)
 
 > The authoritative specification for how agents read and obey `AGENTS.md` files written against the `agents-template-schema` family. The template (`AGENTS-TEMPLATE.md`) and any `AGENTS.md` written from it MUST conform to this spec. When the two conflict, this spec wins.
 
@@ -25,7 +25,7 @@
 
 This spec governs:
 
-- `AGENTS.md` files written against `agents-template-schema 3` (or later). Files written against schema 1 or 2 are **legacy** input; agents read them best-effort (§Reader algorithm).
+- `AGENTS.md` files written against `agents-template-schema 4` (or later). Files written against schema 1, 2, or 3 are **legacy** input; agents read them best-effort (§Reader algorithm).
 - `AGENTS-TEMPLATE.md`, the canonical template that produces conforming `AGENTS.md` files.
 - Any agent that reads a conforming `AGENTS.md`, regardless of which tool or overlay produced or consumes the file.
 
@@ -53,7 +53,7 @@ Every conforming `AGENTS.md` declares its schema version in YAML frontmatter:
 
 ```yaml
 ---
-agents-template-schema: 3
+agents-template-schema: 4
 ---
 ```
 
@@ -64,13 +64,15 @@ agents-template-schema: 3
 
 The schema 1–2 footer marker existed to guard against agent harnesses that read large files from the bottom. Schema 3 drops it and relies solely on the top-of-file frontmatter — an accepted trade-off, stated here so the choice is explicit. Where bottom-reading matters, agents parse the frontmatter of the first lines; no footer analogue is required.
 
-A new minor version (e.g., `3.1`) adds sections or markers in a backward-compatible way. A new major version (e.g., `4`) may rename or repurpose sections and is **not** backward-compatible.
+A new minor version (e.g., `4.1`) adds sections or markers in a backward-compatible way. A new major version (e.g., `5`) may rename or repurpose sections and is **not** backward-compatible.
+
+**Schema 4** adds the content-discipline rules (Kiro steering best practices): generated files are written short, one domain per file, binding statements with a one-line *why* per rule, and no empty stub sections. The discipline is enforced by the template and the onboarding skill; conformance checks remain structural (§Conformance).
 
 ---
 
 ## Sections
 
-An `AGENTS.md` written against schema 3 carries a frontmatter header followed by the following sections, in order. Sections MAY be omitted; sections in **bold** are recommended.
+An `AGENTS.md` written against schema 4 carries a frontmatter header followed by the following sections, in order. Sections MAY be omitted; sections in **bold** are recommended.
 
 ### Frontmatter
 
@@ -78,7 +80,7 @@ Every generated file (root and siblings) starts with YAML frontmatter. On the ro
 
 ```yaml
 ---
-agents-template-schema: 3
+agents-template-schema: 4
 project: "<project name>"
 description: "<one-line: what the project is>"
 language: "<language of the file, e.g. en>"
@@ -109,6 +111,7 @@ On siblings (`AGENTS.<TOPIC>.md`), the required frontmatter is `agents-template-
 Content rules:
 
 - Every other section's text is a binding instruction for the repository: the agent obeys it.
+- **Schema 4 discipline:** sections stay short. Each entry is a binding statement; non-obvious rules carry a one-line *why*. A section with nothing binding to say is omitted, not filled with placeholders. When depth is needed, it moves to a sibling via `## Skill overlays` (one domain per file).
 - `## Skill overlays` holds pointer lines to sibling files. The agent reads those files lazily — when the task touches their domain. Overlay siblings extend `AGENTS.md` from the outside; their text is not part of `AGENTS.md`.
 - Adopted tools and workflows (BMAD, GSD-core, openspec, ...) are overlays: their state lives in their own artifact directories, and they appear as pointer lines under `## Skill overlays`.
 
@@ -126,7 +129,7 @@ A skill overlay is listed in `AGENTS.md` under `## Skill overlays` as a pointer:
 
 Sibling `AGENTS.<TOPIC>.md` specification files (the split template's own output) are listed the same way, with the dotted file name as the pointer label.
 
-An overlay may also ship one or more **skills** (executable onboarding, refresh, or maintenance procedures). A skill is identified by its directory under the overlay (e.g., `agents-init/`) and is named in the overlay's pointer with a brief description of when to invoke it.
+An overlay may also ship one or more **skills** (executable onboarding, refresh, or maintenance procedures) as a directory with a `SKILL.md`, following the open Agent Skills standard. A skill lives under `skill/<name>/` inside its overlay and is installed into a harness's skills directory verbatim (`SKILL.md` plus its asset files). It is named in the overlay's pointer with a brief description of when to invoke it.
 
 Rules:
 
@@ -139,16 +142,16 @@ Rules:
 
 | Name             | Pointer(s)                                                  | Read / invoke when                       |
 | ---------------- | ----------------------------------------------------------- | ---------------------------------------- |
-| `agents-template` | `AGENTS-TEMPLATE.md`, `AGENTS-SPEC.md`, `agents-init/SKILL.md` | Editing the schema or onboarding a project (read template + spec; run `agents-init` to scaffold). The canonical template ships as a split set: thin root `AGENTS.md` plus heavy, lazily loaded sibling `AGENTS.<TOPIC>.md` overlays |
+| `agents-template` | `skill/split-agents-template/` (SKILL.md + `assets/`)       | Editing the schema or onboarding a project (read the assets; run the `split-agents-template` skill to scaffold). The canonical template ships as a split set: thin root `AGENTS.md` plus heavy, lazily loaded sibling `AGENTS.<TOPIC>.md` overlays |
 | `impeccable`     | `PRODUCT.md`, `DESIGN.md`                                   | Any UI/design work                       |
 
 ---
 
 ## Onboarding
 
-A downstream project that adopts the schema writes a conformant `AGENTS.md` by running an **onboarding skill** shipped by the agents-template overlay. The canonical onboarding skill is `agents-init`. The contract between the onboarding skill and the schema is:
+A downstream project that adopts the schema writes a conformant `AGENTS.md` by running an **onboarding skill** shipped by the agents-template overlay. The canonical onboarding skill is `split-agents-template` (`skill/split-agents-template/SKILL.md` in this repository, installed verbatim into a harness's skills directory elsewhere). The contract between the onboarding skill and the schema is:
 
-- The onboarding skill reads `AGENTS-TEMPLATE.md` and replaces its placeholders with project-specific content. It MUST NOT modify the `agents-template-schema` key or the `## Reader contract (minimal)` section. With the user's answers it populates the frontmatter identity keys (`project`, `description`, `language`) and stamps `generated` with the write date.
+- The onboarding skill reads `assets/AGENTS-TEMPLATE.md` (beside its `SKILL.md`) and replaces its placeholders with project-specific content. It MUST NOT modify the `agents-template-schema` key or the `## Reader contract (minimal)` section. With the user's answers it populates the frontmatter identity keys (`project`, `description`, `language`) and stamps `generated` with the write date. It writes every generated file under the schema 4 content-discipline rules (§Schema versioning).
 - The onboarding skill is **non-destructive**: it MUST archive any existing `AGENTS.md` to `AGENTS.md.<suffix>.bak` before overwriting. The suffix is the project slug (preferred) or a date stamp (fallback).
 - The onboarding skill MUST verify conformance against §Conformance before declaring success. If any check fails, the skill aborts and surfaces the failed checks; it does not write a non-conformant file.
 - The onboarding skill may create the project's `AGENTS.<TOPIC>.md` sibling specification files (the split template is canonical for this). It MUST NOT write other overlays' artifacts (`_bmad-output/`, `.planning/`, `openspec/changes/`); those belong to the other overlays' onboarding skills.
@@ -161,52 +164,77 @@ A project may ship its onboarding skill in a separate overlay. Such a skill MUST
 
 ## Distribution
 
-A skill that conforms to this spec is **inert** until a harness can find it. Each agent harness scans one or more vendor-specific directories at the repo root (or under the user's home directory) for skill and slash-command definitions. The canonical skill body lives in a single place; vendor-specific entries are thin wrappers that point at it.
+A skill that conforms to this spec is **inert** until a harness can find it. This repository ships as a **skill collection**: canonical skills live under `skill/<name>/` and are installed verbatim (as a whole folder) into a harness's skills directory. Vendor-specific wrapper files are **generated artifacts, untracked** — installers create them at install time.
 
 ### Canonical skill location
 
-A skill body MUST live in a single file whose path is documented in the overlay's pointer in `AGENTS.md`. The agents-template overlay's canonical skill is `agents-init/SKILL.md`. All vendor-specific wrappers dispatch to this file.
+A skill body MUST live in a single `SKILL.md` at `skill/<name>/`, with the files it needs beside it (e.g. `skill/<name>/assets/`). The folder is self-contained: copying it into a skills directory yields a working skill. The agents-template overlay's canonical skill is `skill/split-agents-template/SKILL.md`; its onboarding assets live in `skill/split-agents-template/assets/`.
 
 ### Vendor wrapper shapes
 
 Two shapes are in use across the supported harnesses:
 
-- **Flat-file slash command** — a single file with frontmatter that the harness registers as a slash command. Body is short: frontmatter + a pointer to the canonical skill. Used by Claude Code, OpenCode, Codex (prompts), Cursor, Gemini CLI, GitHub Copilot.
-- **Directory-with-`SKILL.md` skill** — a directory containing a `SKILL.md` (and optionally other files) that the harness auto-discovers. Body is the full skill. Used by Antigravity, Codex (skills), Hermes, Kiro, Pi, Qoder, Rovo Dev, Trae, Trae-CN, Vibe, DeepSeek Harness, Mistral Vibe.
+- **Directory-with-`SKILL.md` skill** — a directory containing a `SKILL.md` (plus assets) that the harness auto-discovers. The canonical skill folder is copied verbatim. Used by Claude Code (skills), Antigravity, Codex (skills), Hermes, Kiro, Pi, Qoder, Rovo Dev, Trae, Trae-CN, Vibe, DeepSeek Harness, Mistral Vibe, and any Agent Skills-standard harness.
+- **Flat-file slash command** — a single file with frontmatter that the harness registers as a slash command. Body is short: frontmatter + a pointer to the locally installed skill folder. Used by Claude Code (commands), OpenCode, Codex (prompts), Cursor (commands), Gemini CLI, GitHub Copilot.
 
-A wrapper MUST be a copy of the canonical skill (for directory-with-`SKILL.md` shapes) or a thin dispatcher (for flat-file slash commands). Wrappers MUST NOT silently modify the canonical skill body.
+Wrappers are generated from the canonical skill by the installers. A wrapper MUST NOT silently modify the canonical skill body.
+
+### Exclusion: keeping vendor folders out of the repo
+
+Vendor folders are installer output. This repository untracks them (gitignore). Each harness honors at least one ignore mechanism:
+
+| Harness     | Exclusion mechanism |
+| ----------- | ------------------- |
+| Codex       | `.gitignore` — no `.codexignore` exists (openai/codex #2847); gitignored paths are excluded from context |
+| Claude Code | `.gitignore` for file discovery; optional `permissions.deny` Read globs for hardening |
+| Cursor      | `.cursorignore` (blocks AI features + agent reads) and `.cursorindexingignore` (indexing only) |
+| Antigravity | `.gitignore` — the agent cannot access gitignored paths (workspace "gitignore access" toggle) |
+| Kiro        | `.kiroignore` (gitignore syntax; global at `~/.kiro/settings/kiroignore`); stack with `.gitignore` via `kiroAgent.agentIgnoreFiles` |
+
+Caveats:
+
+- **Kiro and Antigravity honor gitignore for skill detection too.** A consumer repo that gitignores its skills directory makes installed skills invisible. In consumer repos, project-local skills MUST be committed, not ignored. Why: skill discovery goes through the same ignore rules as file reads.
+- Kiro's `.kiroignore` cannot re-include a file whose parent directory is ignored — ignore specific paths, never whole skill directories.
+- When a consumer insists on ignoring the vendor dir, gitignore negation (`!.claude/skills/` style) can unhide the skills — except under Kiro, where the parent-dir rule applies.
 
 ### Vendor matrix
 
-| Harness            | Wrapper path (project-local)                       | Shape                          | Notes                                                                              |
+| Harness            | Project-local install                              | Shape                          | Notes                                                                              |
 | ------------------ | --------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------- |
-| Claude Code        | `.claude/commands/agents-init.md`                   | Flat-file slash command        | Anthropic's flagship harness.                                                       |
-| OpenCode           | `.opencode/command/agents-init.md`                  | Flat-file slash command        | Singular `command/`.                                                                |
-| Codex (slash)      | `.codex/prompts/agents-init.md`                     | Flat-file slash command        | Codex also has a skills system; both are supported.                                 |
-| Codex (skill)      | `.agents/skills/agents-init/SKILL.md`               | Directory-with-`SKILL.md`       | Plural `.agents/`.                                                                   |
-| Cursor (slash)     | `.cursor/commands/agents-init.md`                   | Flat-file slash command        |                                                                                    |
-| Cursor (skill)     | `.cursor/skills/agents-init/SKILL.md`               | Directory-with-`SKILL.md`       |                                                                                    |
-| Gemini CLI         | `.gemini/commands/agents-init.toml`                 | Flat-file slash command (TOML) | TOML frontmatter, not YAML.                                                         |
-| Antigravity        | `.agent/skills/agents-init/SKILL.md`                | Directory-with-`SKILL.md`       | Singular `.agent/` (not `.agents/`). Google's flagship.                             |
-| GitHub Copilot     | `.github/prompts/agents-init.prompt.md`             | Flat-file prompt file          | `.prompt.md` suffix is the Copilot convention.                                     |
-| Hermes             | `.hermes/skills/agents-init/SKILL.md`               | Directory-with-`SKILL.md`       | Project-local skills require a `hermes skills trust` step.                          |
-| Kiro               | `.kiro/skills/agents-init/SKILL.md`                 | Directory-with-`SKILL.md`       |                                                                                    |
-| Pi                 | `.pi/skills/agents-init/SKILL.md`                   | Directory-with-`SKILL.md`       |                                                                                    |
-| Qoder              | `.qoder/skills/agents-init/SKILL.md`                | Directory-with-`SKILL.md`       |                                                                                    |
-| Rovo Dev           | `.rovodev/skills/agents-init/SKILL.md`              | Directory-with-`SKILL.md`       | Atlassian.                                                                          |
-| Trae               | `.trae/skills/agents-init/SKILL.md`                 | Directory-with-`SKILL.md`       |                                                                                    |
-| Trae-CN            | `.trae-cn/skills/agents-init/SKILL.md`              | Directory-with-`SKILL.md`       |                                                                                    |
-| Vibe               | `.vibe/skills/agents-init/SKILL.md`                 | Directory-with-`SKILL.md`       | Mistral.                                                                             |
-| DeepSeek Harness   | `.dsh/skills/agents-init/SKILL.md`                  | Directory-with-`SKILL.md`       |                                                                                    |
-| Veto (global)      | `~/.veto/skills/agents-init/SKILL.md`                | Directory-with-`SKILL.md`       | Project-local install is discouraged; use the global path.                          |
+| Claude Code        | `.claude/skills/split-agents-template/`             | Directory-with-`SKILL.md`      | Anthropic's flagship. Slash dispatcher: `.claude/commands/split-agents-template.md`. |
+| OpenCode           | `.opencode/command/split-agents-template.md`        | Flat-file slash command        | Singular `command/`.                                                                |
+| Codex (slash)      | `.codex/prompts/split-agents-template.md`           | Flat-file slash command        |                                                                                     |
+| Codex (skill)      | `.agents/skills/split-agents-template/SKILL.md`     | Directory-with-`SKILL.md`      | Plural `.agents/`.                                                                   |
+| Cursor (slash)     | `.cursor/commands/split-agents-template.md`         | Flat-file slash command        | Skill: `.cursor/skills/split-agents-template/`.                                     |
+| Gemini CLI         | `.gemini/commands/split-agents-template.toml`       | Flat-file slash command (TOML) | TOML frontmatter, not YAML.                                                         |
+| Antigravity        | `.agent/skills/split-agents-template/SKILL.md`      | Directory-with-`SKILL.md`      | Singular `.agent/` (not `.agents/`). Google's flagship.                             |
+| GitHub Copilot     | `.github/prompts/split-agents-template.prompt.md`   | Flat-file prompt file          | `.prompt.md` suffix is the Copilot convention.                                      |
+| Hermes             | `.hermes/skills/split-agents-template/SKILL.md`     | Directory-with-`SKILL.md`      | Project-local skills require a `hermes skills trust` step.                          |
+| Kiro               | `.kiro/skills/split-agents-template/SKILL.md`       | Directory-with-`SKILL.md`      | Installs verbatim (Agent Skills standard).                                          |
+| Pi                 | `.pi/skills/split-agents-template/SKILL.md`         | Directory-with-`SKILL.md`      |                                                                                    |
+| Qoder              | `.qoder/skills/split-agents-template/SKILL.md`      | Directory-with-`SKILL.md`      |                                                                                    |
+| Rovo Dev           | `.rovodev/skills/split-agents-template/SKILL.md`    | Directory-with-`SKILL.md`      | Atlassian.                                                                          |
+| Trae               | `.trae/skills/split-agents-template/SKILL.md`       | Directory-with-`SKILL.md`      |                                                                                    |
+| Trae-CN            | `.trae-cn/skills/split-agents-template/SKILL.md`    | Directory-with-`SKILL.md`      |                                                                                    |
+| Vibe               | `.vibe/skills/split-agents-template/SKILL.md`       | Directory-with-`SKILL.md`      | Mistral.                                                                             |
+| DeepSeek Harness   | `.dsh/skills/split-agents-template/SKILL.md`        | Directory-with-`SKILL.md`      |                                                                                    |
+| Veto (global)      | `~/.veto/skills/split-agents-template/SKILL.md`     | Directory-with-`SKILL.md`      | Project-local install is discouraged; use the global path.                          |
 
-The seven priority wrappers shipped in this repository are: Claude Code, OpenCode, Codex (slash + skill), Cursor (slash), Gemini CLI, Antigravity, and GitHub Copilot. Other vendors are supported via the installer in `scripts/install.sh` and `scripts/install.ps1`, which detects the user's installed harness and copies the right wrapper.
+Flat-file slash commands are optional sugar on top of a skill install: a dispatcher reads the skill folder installed next to it. Kiro skills work identically across Kiro's surfaces (IDE and CLI), both `.kiro/skills/` (workspace) and `~/.kiro/skills/` (personal) merge.
+
+### Install strategy
+
+- **Project-local (default).** Install into the target repo and **commit it**. Why: skills are source for agents, like code; versioning them gives the whole team the same agent behavior, and Codex/Antigravity/Kiro skill discovery stays visible.
+- **Global (fallback).** Install under the harness's home path (`~/.claude/skills/`, `~/.kiro/skills/`, ...). Why: a consumer's gitignore can never hide a home-dir skill.
 
 ### Installer behavior
 
-The installer scripts (`scripts/install.sh`, `scripts/install.ps1`) detect installed harnesses by looking for their home-directory markers (`~/.claude/`, `~/.opencode/`, `~/.codex/`, `~/.cursor/`, `~/.gemini/`, `~/.agent/`, `~/.config/gh-copilot/`, etc.) and, for each detected harness, copy the corresponding wrapper to the user's home directory (for global-install vendors) or print instructions for project-local vendors that the user must run themselves.
+The installer scripts (`scripts/install.sh`, `scripts/install.ps1`) let the user **select the harness**:
 
-The installer MUST NOT overwrite an existing wrapper without confirmation. It MUST print a summary of which wrappers it installed and which it skipped.
+- **Interactive (default):** a menu of all supported harnesses, marking those detected via home-directory markers (`~/.claude/`, `~/.kiro/`, `~/.codex/`, `~/.cursor/`, `~/.gemini/`, `~/.agent/`, `~/.config/gh-copilot/`, etc.). Detected harnesses are preselected; any harness in the matrix can be picked even when not detected, because install paths are fixed.
+- **Non-interactive:** `--harness <name>[,<name>...]` and `--list` (see script headers). For CI and scripted installs.
+- Project-local installs take a target repo (prompted, or `--target`); global installs go to the home paths. If the target repo gitignores the skill path, the installer warns (§Exclusion caveats).
+- The installer MUST NOT overwrite an existing wrapper without confirmation. It MUST print a summary of which wrappers it installed and which it skipped.
 
 ---
 
@@ -245,7 +273,7 @@ New overlays join the spec by addition, not modification. To register one:
 1. **Choose a name.** A short lowercase identifier (`myoverlay`).
 2. **Define the sibling structure.** Where the overlay's files live and what the pointer line names.
 3. **Add a row** to the Supported overlays table in this spec.
-4. **Bump the schema marker** in this spec (`<!-- agents-spec-schema 3 -->` → `3.1` for additions, `4` for a breaking schema change) and in the template's frontmatter `agents-template-schema` key.
+4. **Bump the schema marker** in this spec (`<!-- agents-spec-schema 4 -->` → `4.1` for additions, `5` for a breaking schema change) and in the template's frontmatter `agents-template-schema` key.
 
 The spec does not require a central registry. Overlay authors are responsible for proposing their entries; the spec is updated by the template maintainer when consensus forms.
 
@@ -253,9 +281,9 @@ The spec does not require a central registry. Overlay authors are responsible fo
 
 ## Conformance
 
-A schema-3 file is **conformant** if:
+A schema-4 file is **conformant** if:
 
-1. Its first content is a `---`-delimited YAML frontmatter block carrying an integer `agents-template-schema: 3` key, with no legacy HTML `<!-- agents-template-schema ... -->` header or footer markers.
+1. Its first content is a `---`-delimited YAML frontmatter block carrying an integer `agents-template-schema: 4` key, with no legacy HTML `<!-- agents-template-schema ... -->` header or footer markers.
 2. If the `## Reader contract (minimal)` section is present (it is required when `AGENTS-SPEC.md` does not ship in the repository), it contains the obligations listed in the template, in the listed order, with wording substantively equivalent.
 3. Every `## Skill overlays` pointer references a file or directory that exists in the repository.
 
@@ -273,5 +301,6 @@ An agent MUST treat a non-conformant file as a best-effort input: it parses what
 - **v1.3** — the canonical template became the **split edition**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped siblings `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, ... with `description`/`allowed-tools`/`mode` frontmatter and a `<!-- Last reviewed: ... -->` stamp, loaded lazily via `## Skill overlays` pointers. Distilled from a first production deployment in the ControlEasy Reborn repository.
 - **v2** — overlay pointers became the single integration point: adopted tools and workflows (BMAD, GSD-core, openspec, impeccable) are registered as pointer lines under `## Skill overlays`, with their state kept in their own artifact directories. Freshness stamps are sibling review stamps. Schema marker bumped to `agents-template-schema 2`.
 - **v3** (breaking) — the schema version marker moved from HTML header/footer comments into a mandatory YAML frontmatter key (`agents-template-schema: 3`); the comments are removed from generated files and are read as legacy input. Generated roots additionally carry the identity keys `project`, `description`, `language`, `generated`, and `mode: primary`; every generated sibling carries the schema key in its own frontmatter. Schema 1–2 files no longer conform; agents read them best-effort.
+- **v4** (breaking) — canonical skills moved to a `skill/<name>/SKILL.md` collection layout; the onboarding skill `agents-init` became `split-agents-template` (`skill/split-agents-template/`); vendor wrapper folders became **untracked installer output** with a per-harness exclusion table (Codex: gitignore only; Cursor: `.cursorignore`; Kiro: `.kiroignore`; Antigravity: gitignore) and a commit-project-local-skills install strategy. Content-discipline rules introduced for generated files (schema 4: one domain per file, short binding statements, a *why* on every rule, no stub sections), following Kiro steering/skill best practices; the skill gained a Kiro steering branch (native AGENTS.md-as-steering, optional `#[[file:AGENTS.md]]` on-demand steering file). Schema 1–3 files read best-effort.
 
-<!-- agents-spec-schema 3 -->
+<!-- agents-spec-schema 4 -->

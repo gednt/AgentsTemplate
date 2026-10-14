@@ -1,51 +1,49 @@
 # AgentsTemplate
 
-A vendor-neutral `AGENTS.md` schema for AI coding agents, plus the onboarding skill that scaffolds it in any project.
+A vendor-neutral `AGENTS.md` schema for AI coding agents, shipped as a **skill collection** — the onboarding skill installs verbatim into any harness's skills directory.
 
-This repository ships three artifacts:
+## Artifacts
 
-| File | Role |
+| Path | Role |
 | --- | --- |
-| `AGENTS-SPEC.md` | The authoritative reader contract. Defines how agents interpret any `AGENTS.md` written against this schema, the extension protocol for new workflows and overlays, and the conformance rules. |
-| `AGENTS-TEMPLATE.md` | The canonical template (split edition): a thin root `AGENTS.md` plus heavy sibling `AGENTS.<TOPIC>.md` overlays (policy, stack, worktrees) loaded lazily. Downstream projects copy the root as `AGENTS.md` and create the siblings they earn. |
-| `agents-init/SKILL.md` | The canonical onboarding skill. Run it in a downstream project to scaffold or refresh that project's `AGENTS.md`. |
+| `skill/split-agents-template/SKILL.md` | The canonical onboarding skill (Agent Skills standard): Detect → Interview → Write → Verify, Kiro-style. |
+| `skill/split-agents-template/assets/AGENTS-SPEC.md` | The authoritative reader contract: how agents interpret any `AGENTS.md` written against this schema, the extension protocol, and conformance rules. |
+| `skill/split-agents-template/assets/AGENTS-TEMPLATE.md` | The canonical split template: thin root `AGENTS.md` plus lazily loaded `AGENTS.<TOPIC>.md` siblings. |
+| `scripts/install.sh`, `scripts/install.ps1` | Installers: select the harness, copy the skill folder (project-local, committed — or global). |
 
 ## What it solves
 
-Every AI coding harness (Claude Code, Cursor, Codex, Gemini CLI, Antigravity, GitHub Copilot, OpenCode, Hermes, Kiro, Pi, Qoder, Rovo Dev, Trae, Vibe, Mistral Vibe, Veto, ...) reads a different `AGENTS.md` and a different skill convention. The schema here gives those harnesses a shared structure to obey, so a project can document its workflow once and have every supported agent follow it.
+Every AI coding harness (Claude Code, Cursor, Codex, Gemini CLI, Antigravity, Kiro, GitHub Copilot, OpenCode, Hermes, Pi, Qoder, Rovo Dev, Trae, Vibe, Veto, ...) reads a different `AGENTS.md` and discovers skills differently. The schema gives them a shared structure, so a project documents its workflow once and every supported agent follows it.
 
-Concretely the schema introduces:
+Concretely:
 
-- **Frontmatter versioning** — every generated file (root and siblings) declares its schema version in YAML frontmatter (`agents-template-schema: 3`); the schema 1–2 HTML header/footer markers are legacy input.
-- **Skill overlays** — pointers to sibling files (e.g. `PRODUCT.md`, `DESIGN.md`, `AGENTS.<TOPIC>.md`) that an agent reads lazily when its task touches the overlay's domain. Adopted tools and workflows — BMAD, GSD-core, openspec, impeccable — integrate as overlays.
-- **Freshness stamps** — `<!-- Last reviewed: YYYY-MM-DD against <reference> -->` markers on sibling specification files that let an agent detect stale context without erroring.
-- **A conformance contract** — a short checklist any `AGENTS.md` must pass to be called conformant.
+- **Skill collection layout** — canonical skills live at `skill/<name>/SKILL.md` with assets beside them; copy the folder into `.claude/skills/`, `.kiro/skills/`, `.cursor/skills/`, `.agents/skills/`, or the matching home path and it works.
+- **Frontmatter versioning** — every generated file declares its schema version (`agents-template-schema: 4`); schema 1–3 HTML markers are legacy input.
+- **Skill overlays** — pointers to sibling files an agent reads lazily when its task touches the overlay's domain; BMAD, GSD-core, openspec, impeccable integrate as overlays.
+- **Kiro-style discipline** — schema 4 content rules: one domain per file, short binding statements, a *why* on every rule, no stub sections.
+- **Kiro integration** — Kiro loads a proper `AGENTS.md` natively as always-on steering (CLI v2.18 / IDE 1.0.309+); the skill can optionally add an on-demand `.kiro/steering/` file with `inclusion: auto` + `#[[file:AGENTS.md]]`.
+- **A conformance contract** — a short checklist any `AGENTS.md` must pass.
 
 ## Quick start for downstream projects
 
+Install the skill into your harness's skills directory:
+
 ```bash
-# Scaffold or refresh an AGENTS.md in the current repository.
-# Reads the repo, asks about gaps, archives any existing AGENTS.md, and writes a conformant one.
-# The exact invocation depends on your harness; the canonical body is agents-init/SKILL.md.
+# From a clone of this repository:
+git clone <repo> skill/split-agents-template   # or copy the skill/ folder
+cp -r skill/split-agents-template ~/.claude/skills/        # global
+cp -r skill/split-agents-template .claude/skills/          # project-local (commit it — do not gitignore; see AGENTS-SPEC.md §Distribution)
 ```
 
-See `agents-init/SKILL.md` for the full Detect → Interview → Write flow and the archive convention (`AGENTS.md.<slug>.bak`).
+Or run `scripts/install.sh` / `scripts/install.ps1` to pick the harness interactively. Then, in your harness, invoke **split-agents-template** and follow the Detect → Interview → Write flow.
 
-## Installing the skill in your harness
+## Vendor wrappers
 
-The `agents-init` skill body lives once. Vendor wrappers at the repo root make it discoverable to each harness; `scripts/install.sh` and `scripts/install.ps1` detect which harness you have installed and copy the right wrapper.
-
-Priority wrappers shipped here:
-
-- Claude Code, OpenCode, Codex (slash + skill), Cursor (slash), Gemini CLI, Antigravity, GitHub Copilot.
-
-Other supported vendors (Hermes, Kiro, Pi, Qoder, Rovo Dev, Trae, Trae-CN, Vibe, Mistral Vibe, Veto) are added by the installer when it detects their home-directory markers.
-
-The installer never overwrites an existing wrapper without confirmation and prints a summary of what it installed or skipped.
+Vendor folders (`.claude/`, `.opencode/`, `.codex/`, `.cursor/`, `.gemini/`, `.agent/`, `.github/`, ...) are **generated installer output and excluded from this repository**. Each harness honors `.gitignore` (or its own ignore file: `.cursorignore`, `.kiroignore`) — the mechanism table and its caveats are in `AGENTS-SPEC.md` §Distribution.
 
 ## Schema version
 
-The shipped artifacts conform to `agents-spec-schema 3` and `agents-template-schema 3`. The two version numbers move together: bumping either is a breaking change to the contract.
+The shipped artifacts conform to `agents-spec-schema 4` and `agents-template-schema 4`; the two version numbers move together — bumping either is a breaking change.
 
 ## License
 
