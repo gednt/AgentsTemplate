@@ -1,6 +1,8 @@
-<!-- agents-template-schema 2 -->
+---
+agents-template-schema: 3
+---
 
-# AGENTS.md Template (v1) — Split Edition
+# AGENTS.md Template — Split Edition
 
 > A schema-driven template for `AGENTS.md` that works across BMAD, GSD-core, openspec, impeccable, and any future skill overlay — shipped as a **split set**: a thin root `AGENTS.md` (≤ ~80 lines) plus heavy, domain-scoped sibling files `AGENTS.POLICY.md`, `AGENTS.STACK.md`, `AGENTS.WORKTREES.md`, and so on, loaded **only when the task touches that domain**.
 
@@ -30,10 +32,14 @@ Tiny projects (a schema artifact, a single-purpose script repo) may inline every
 Copy this skeleton to the project root as `AGENTS.md` and replace the placeholders:
 
 ```markdown
-<!-- agents-template-schema 2 -->
-
-<optional YAML frontmatter: description + allowed-tools, per sibling
-conventions below. Omit entirely on harnesses that ignore it.>
+---
+agents-template-schema: 3
+project: "<project name>"
+description: "<one-line: what the project is>"
+language: "<language of this file, e.g. en>"
+generated: <YYYY-MM-DD write date>
+mode: primary
+---
 
 # AGENTS.md
 
@@ -50,7 +56,7 @@ An agent reading this `AGENTS.md` alone (without `AGENTS-SPEC.md`) MUST:
 
 1. Treat the content of every section as a binding instruction for this repository — the agent obeys it.
 2. Treat the `## Skill overlays` list as a set of pointers to sibling files. The agent reads those files directly, lazily, only when the task touches the overlay's domain.
-3. Treat the schema header (`<!-- agents-template-schema 2 -->`) as the version this file conforms to. Unknown section names do not error; the agent ignores them.
+3. Treat the `agents-template-schema` key in this file's frontmatter as the version this file conforms to. Unknown section names do not error; the agent ignores them.
 
 ---
 
@@ -122,10 +128,9 @@ per convention; details belong in the sibling for that domain.>
 
 ---
 
-<!-- agents-template-schema 2 -->
 ```
 
-The header/footer markers and the reader contract are the schema-2 contract; a split project is a plain schema-2 file. Workflows (BMAD, GSD-core, openspec, ...) are adopted as ordinary overlay pointers; their state lives in their own artifact directories.
+The frontmatter schema key and the reader contract are the schema-3 contract; a split project is a plain schema-3 file. Schema 1–2 `<!-- agents-template-schema N -->` HTML header/footer comments are legacy and are not written. Workflows (BMAD, GSD-core, openspec, ...) are adopted as ordinary overlay pointers; their state lives in their own artifact directories.
 
 ---
 
@@ -141,21 +146,23 @@ The header/footer markers and the reader contract are the schema-2 contract; a s
 
 ### Frontmatter
 
-Every sibling file starts with a YAML frontmatter block that harnesses and agents use to decide whether and how to load it:
+Every file the project generates starts with a YAML frontmatter block that harnesses and agents use to decide the schema version and whether and how to load the file. Siblings:
 
 ```yaml
 ---
+agents-template-schema: 3
 description: "<what the file governs> + <explicit load trigger, e.g. 'Load before any non-trivial change.'>"
 allowed-tools: [Read, Grep, Glob, Bash(<allowlisted commands>)]   # optional
 mode: primary
 ---
 ```
 
+- **`agents-template-schema`** — required, integer first key. The authoritative schema version marker (§ AGENTS-SPEC). Identical on the root and every sibling; identical is the conformance check, since a split set is one logical document.
 - **`description`** — mandatory. Two parts: what the file governs, and when to load it. This is what an agent reads instead of the whole file when deciding.
 - **`allowed-tools`** — optional, harness-dependent. Where supported, it scopes the commands the file authorizes. Keep it a narrow allowlist of read-only plus task-relevant commands, not a blanket grant. On harnesses that ignore it, it is inert documentation.
 - **`mode: primary`** — the file is authoritative for its domain (a sibling is never a secondary draft of something else).
 
-The root file may carry the same frontmatter shape (omit `allowed-tools` where the root needs no shell access, or keep an allowlist of read-only commands).
+The root carries the same block plus the identity keys (`project`, `description`, `language`, `generated`, per the skeleton above). `allowed-tools` may be omitted where the root needs no shell access, or kept as a read-only allowlist. Harnesses that do not parse frontmatter render the block as plain text between horizontal rules — inert but present; the block MUST NOT be omitted for their sake.
 
 ### Review stamp
 
@@ -173,6 +180,7 @@ Directly after the frontmatter, each sibling carries a review stamp:
 
 ```markdown
 ---
+agents-template-schema: 3
 description: "Hard policy: <verification gate>, <per-surface gates>, platform-aware execution, hard prohibitions, workflow directories. Load before any non-trivial change."
 allowed-tools: [Read, Grep, Glob, Bash(<gate scripts and read-only commands>)]
 mode: primary
@@ -227,6 +235,7 @@ Each workflow keeps its writes inside its own directory.
 
 ```markdown
 ---
+agents-template-schema: 3
 description: "Stack and language conventions: <backend>, <frontend>, <persistence>. Per-language style rules, agent workflow conventions. Load before touching code in the corresponding language."
 allowed-tools: [Read, Grep, Glob, Bash(<build/test/lint tool commands>)]
 mode: primary
@@ -268,6 +277,7 @@ The Git worktree rule is **strongly recommended** for every project that adopts 
 
 ```markdown
 ---
+agents-template-schema: 3
 description: "Mandatory Git worktree rule: all Git work happens in a worktree under .worktrees/, never commit/branch/push/merge on main; canonical wrapper script and naming convention. Load before any commit, branch, or merge."
 allowed-tools: [Read, Grep, Glob, Bash(git status *), Bash(git log *), Bash(git diff *), Bash(git worktree *), Bash(scripts/<wrapper>*)]
 mode: primary
@@ -337,7 +347,3 @@ Any domain may earn a sibling beyond the three above. Follow the formula:
 2. Create the siblings the project actually needs from the templates above. Skip a domain entirely if it fits in one line rather than creating a stub.
 3. Move nothing without leaving its headline in the root; remove nothing that is enforceable.
 4. Verify: the root still passes `AGENTS-SPEC.md` §Conformance; each sibling exists, is self-contained, and is listed in the root's `## Skill overlays`.
-
----
-
-<!-- agents-template-schema 2 -->
