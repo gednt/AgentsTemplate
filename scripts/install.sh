@@ -10,6 +10,8 @@
 #   ./scripts/install.sh --harness kiro,claude-code        non-interactive install
 #   ./scripts/install.sh --target <repo>                   project-local target repo (default prompts; "." = this repo)
 #   ./scripts/install.sh --global                          install to home paths instead of project-local
+#   ./scripts/install.sh --update-agents [-t <repo>] [-y]  sync every initialized copy of this skill to the canonical folder
+#   ./scripts/install.sh --kiro-steering [-t <repo>]       generate .kiro/steering: product.md + per-sibling port files
 #
 # Never overwrites an existing destination without confirmation. Prints a summary at the end.
 #
@@ -55,6 +57,7 @@ detect() {
 confirm_path() {
   local dest="$1"
   [[ -e "$dest" ]] || return 0
+  (( ASSUME_YES )) && return 0
   read -r -p "  $dest exists. Overwrite? [y/N] " ans
   [[ "$ans" == "y" || "$ans" == "Y" ]]
 }
@@ -139,19 +142,179 @@ install_one() {
   if [[ "$NAME" == "veto" ]]; then echo "  note: Veto discourages project-local installs; installed to the home path."; fi
 }
 
+print_help() {
+  cat <<'EOF'
+Usage: scripts/install.sh [options]
+
+Install modes:
+  (default)                       interactive harness selection, project-local install
+  --list, -l                      list supported harnesses (* = detected on this machine)
+  --harness <names>, -h <names>   install to harnesses by name or list number, comma-separated
+                                  (e.g. kiro,claude-code or 2,9)
+  --global, -g                    install to home paths instead of project-local
+  --target <repo>, -t <repo>      project-local target repo (default prompts; "." = this repo)
+
+On an already-initialized repo:
+  --update-agents [-t <repo>] [-y]
+                                  sync every initialized copy of this skill (project-local and
+                                  home paths) to the canonical skill folder and regenerate thin
+                                  dispatchers. Touches only installed copies — never AGENTS.md,
+                                  never steering.
+  --kiro-steering [-t <repo>]     generate .kiro/steering/ from AGENTS.md: product.md (the
+                                  project's concern, always-on) plus one port file per
+                                  AGENTS.<TOPIC>.md sibling, with the inclusion mode suited to
+                                  its domain and a live #[[file:]] reference. Touches only
+                                  .kiro/steering/.
+
+Flags:
+  --assume-yes, -y                answer yes to all confirmations (non-interactive)
+  --help                          show this help
+
+Never overwrites an existing destination without confirmation. Prints a summary at the end.
+EOF
+}
+
 # --- flags -------------------------------------------------------------------
 
-LIST=0; GLOBAL=0; PICK=""; TARGET=""
+LIST=0; GLOBAL=0; UPDATE_AGENTS=0; KIRO_STEERING=0; ASSUME_YES=0; PICK=""; TARGET=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --list|-l)                 LIST=1; shift ;;
     --harness|-h)              PICK="${2:?--harness needs a value}"; shift 2 ;;
     --target|-t)               TARGET="${2:?--target needs a value}"; shift 2 ;;
     --global|-g)               GLOBAL=1; shift ;;
-    --help)                    sed -n '3,15p' "$0"; exit 0 ;;
+    --update-agents)           UPDATE_AGENTS=1; shift ;;
+    --kiro-steering)           KIRO_STEERING=1; shift ;;
+    --assume-yes|-y)           ASSUME_YES=1; shift ;;
+    --help)                    print_help; exit 0 ;;
     *) echo "unknown flag: $1 (see --help)" >&2; exit 1 ;;
   esac
 done
+
+# --- modes -------------------------------------------------------------------
+
+if (( UPDATE_AGENTS && KIRO_STEERING )); then
+  echo "error: choose one mode: --update-agents or --kiro-steering, not both" >&2
+  exit 1
+fi
+
+resolve_target() {
+  local t="${1:-.}"
+  if command -v cygpath >/dev/null 2>&1 && [[ "$t" =~ ^[A-Za-z]: ]]; then t="$(cygpath -u "$t")"; fi
+  if [[ ! -d "$t" ]]; then echo "error: target repo not found: $t" >&2; exit 1; fi
+  (cd "$t" && pwd)
+}
+
+extract_section() {
+  local path="$1" header="$2" in=0 out="" line
+  while IFS= read -r line; do
+    if (( ! in )); then
+      [[ "$line" == "$header" ]] && in=1
+      continue
+    fi
+    if [[ "$line" == '## '* || "$line" == '---' ]]; then break; fi
+    out+="$line"$'\n'
+  done < "$path"
+  printf '%s' "$out" | grep -vE '^\s*<[^>]*>\s*$' | grep -vE '^\s*$' || true
+}
+
+update_agents() {
+  local root="$1" dir g
+  local -a copies uniq=()
+  local -A seen=()
+  for row in "${HARNESSES[@]}"; do
+    fields "$row"
+    if [[ -n "$LOCAL_SKILLS" ]]; then
+      dir="$root/${LOCAL_SKILLS%/}/$HID"
+      if [[ -d "$dir" && -f "$dir/SKILL.md" ]]; then copies+=("$dir"); fi
+    fi
+    g="${GLOBAL_SKILLS%/}"
+    if [[ -n "$g" && -d "$g/$HID" && -f "$g/$HID/SKILL.md" ]]; then copies+=("$g/$HID"); fi
+  done
+  for dir in "${copies[@]:-}"; do
+    [[ -n "${seen[$dir]:-}" ]] && continue
+    seen[$dir]=1; uniq+=("$dir")
+  done
+  if (( ${#uniq[@]} == 0 )); then
+    echo "No initialized copies of $HID found (project-local or home paths). Install with: ./scripts/install.sh"
+    return 0
+  fi
+  echo "Initialized copies of $HID :"
+  for dir in "${uniq[@]}"; do echo "  - $dir"; done
+  if (( ! ASSUME_YES )); then
+    local ans
+    read -r -p "Update all listed copies to the canonical skill folder? [y/N] " ans
+    [[ "$ans" == "y" || "$ans" == "Y" ]] || { echo "Aborted. Nothing was updated."; return 0; }
+  fi
+  for dir in "${uniq[@]}"; do
+    cp -r "$SKILL_DIR/." "$dir/"
+    echo "  updated: $dir"
+  done
+  local sp ref
+  for row in "${HARNESSES[@]}"; do
+    fields "$row"
+    [[ -n "$SLASH_PATH" ]] || continue
+    sp="$root/$SLASH_PATH"
+    [[ -e "$sp" ]] || continue
+    if [[ -n "$LOCAL_SKILLS" ]]; then ref="$root/${LOCAL_SKILLS%/}/$HID/SKILL.md"; else ref="$GLOBAL_SKILLS/$HID/SKILL.md"; fi
+    [[ -e "$ref" ]] || continue
+    write_dispatcher_file "$sp" "$ref"
+    echo "  dispatcher: $sp"
+  done
+  echo "Done. Restart your harnesses if their installed skill or dispatcher is stale."
+}
+
+kiro_steering() {
+  local root="$1"
+  local steer="$root/.kiro/steering"
+  [[ -f "$root/AGENTS.md" ]] || { echo "error: no AGENTS.md at $root — steering is written for an initialized repo" >&2; exit 1; }
+  mkdir -p "$steer"
+  local proj
+  proj="$(extract_section "$root/AGENTS.md" '## Project' | sed 's/\*\*//g')"
+  if [[ -z "$proj" ]]; then echo "error: no '## Project' content in $root/AGENTS.md" >&2; exit 1; fi
+  {
+    printf -- '---\ninclusion: always\n---\n\n'
+    printf '%s\n' "$proj"
+  } > "$steer/product.md"
+  echo "  steering: $steer/product.md — the project's concern, always-on."
+  local sibling base topicupper topic port d fm
+  shopt -s nullglob
+  for sibling in "$root"/AGENTS.*.md; do
+    base="$(basename "$sibling")"
+    [[ "$base" == *.bak* ]] && continue
+    topicupper="${base#AGENTS.}"; topicupper="${topicupper%.md}"
+    topic="$(printf '%s' "$topicupper" | tr 'A-Z' 'a-z')"
+    port="$steer/$topic.md"
+    if [[ -e "$port" ]] && ! grep -q '#\[\[file:AGENTS\.' "$port"; then
+      echo "  skipped: $port exists and is not a port file — not touched."
+      continue
+    fi
+    d="$(sed -n 's/^description: "\(.*\)"$/\1/p' "$sibling" | head -1)"
+    if [[ "$topic" == "worktrees" ]]; then
+      fm='inclusion: fileMatch
+fileMatchPattern: ".worktrees/**"'
+    else
+      fm="inclusion: auto
+name: \"$topic rules\"
+description: \"$d\""
+    fi
+    {
+      printf -- '---\n%s\n---\n\n' "$fm"
+      echo "Load this project's $topic rules before touching their domain. Why: they are binding for this repository."
+      echo
+      printf '#[[file:AGENTS.%s.md]]\n' "$topicupper"
+    } > "$port"
+    echo "  steering: $port → $base"
+  done
+  shopt -u nullglob
+  echo "Done. Kiro picks up .kiro/steering/ automatically; nothing else was touched."
+}
+
+if (( UPDATE_AGENTS || KIRO_STEERING )); then
+  TARGET="$(resolve_target "${TARGET:-.}")"
+  if (( UPDATE_AGENTS )); then update_agents "$TARGET"; else kiro_steering "$TARGET"; fi
+  exit 0
+fi
 
 list_menu() {
   echo "Supported harnesses (* = detected on this machine):"

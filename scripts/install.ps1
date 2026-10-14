@@ -9,7 +9,12 @@
 #   powershell -NoProfile -File scripts\install.ps1 -Harness kiro,claude-code
 #   powershell -NoProfile -File scripts\install.ps1 -Target <repo>       project-local target repo (default prompts; "." = this repo)
 #   powershell -NoProfile -File scripts\install.ps1 -Global              install to home paths instead of project-local
+#   powershell -NoProfile -File scripts\install.ps1 -UpdateAgents [-Target <repo>] [-AssumeYes]
+#                                                                        sync every initialized copy of this skill to the canonical folder
+#   powershell -NoProfile -File scripts\install.ps1 -KiroSteering [-Target <repo>]
+#                                                                        generate .kiro/steering: product.md + per-sibling port files
 #
+#   powershell -NoProfile -File scripts\install.ps1 -Help                full usage help
 # Never overwrites an existing destination without confirmation. Prints a summary at the end.
 
 [CmdletBinding()]
@@ -17,10 +22,49 @@ param(
   [switch]$List,
   [switch]$Global,
   [string]$Harness,
-  [string]$Target
+  [string]$Target,
+  [switch]$UpdateAgents,
+  [switch]$KiroSteering,
+  [switch]$AssumeYes,
+  [switch]$Help
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Show-Help {
+  @'
+Usage: scripts\install.ps1 [options]
+
+Install modes:
+  (default)                      interactive harness selection, project-local install
+  -List                          list supported harnesses (* = detected on this machine)
+  -Harness <names>               install to harnesses by name or list number, comma-separated
+                                 (e.g. kiro,claude-code or 2,9)
+  -Global                        install to home paths instead of project-local
+  -Target <repo>                 project-local target repo (default prompts; "." = this repo)
+
+On an already-initialized repo:
+  -UpdateAgents [-Target <repo>] [-AssumeYes]
+                                 sync every initialized copy of this skill (project-local and
+                                 home paths) to the canonical skill folder and regenerate thin
+                                 dispatchers. Touches only installed copies — never AGENTS.md,
+                                 never steering.
+  -KiroSteering [-Target <repo>]
+                                 generate .kiro/steering/ from AGENTS.md: product.md (the
+                                 project's concern, always-on) plus one port file per
+                                 AGENTS.<TOPIC>.md sibling, with the inclusion mode suited to
+                                 its domain and a live #[[file:]] reference. Touches only
+                                 .kiro/steering/.
+
+Flags:
+  -AssumeYes                     answer yes to all confirmations (non-interactive)
+  -Help                          show this help
+
+Never overwrites an existing destination without confirmation. Prints a summary at the end.
+'@ | Write-Host
+}
+
+if ($Help) { Show-Help; exit 0 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
@@ -67,6 +111,7 @@ function Test-Detected {
 function Confirm-Overwrite {
   param([string]$Path)
   if (-not (Test-Path -LiteralPath $Path)) { return $true }
+  if ($AssumeYes) { return $true }
   $ans = Read-Host "  $Path exists. Overwrite? [y/N]"
   return ($ans -eq 'y' -or $ans -eq 'Y')
 }
@@ -148,6 +193,125 @@ function Install-One {
   }
 
   if ($H.n -eq 'veto') { Write-Host "  note: Veto discourages project-local installs; installed to the home path." }
+}
+
+# --- modes: update installed agents ------------------------------------------
+
+if ($UpdateAgents -and $KiroSteering) { Write-Error "Choose one mode: -UpdateAgents or -KiroSteering, not both."; exit 1 }
+
+if ($UpdateAgents) {
+  if (-not $Target) { $Target = Read-Host 'Target repo path (blank = current dir)' }
+  if (-not $Target) { $Target = '.' }
+  $Root = (Resolve-Path $Target).Path
+  $Copies = New-Object System.Collections.Generic.List[object]
+  foreach ($H in $Harnesses) {
+    $localDir = if ($H.l) { Join-Path $Root (($H.l + '/' + $HID) -replace '/', '\') } else { $null }
+    $homeDir  = if ($H.g) { ($H.g + '/' + $HID) } else { $null }
+    foreach ($cand in @($localDir, $homeDir)) {
+      if ($cand -and (Test-Path (Join-Path $cand 'SKILL.md'))) {
+        $dup = $Copies | Where-Object { $_.Path -eq $cand }
+        if (-not $dup) { $Copies.Add(@{ Path = $cand; H = $H; Local = ($cand -like "$Root*") }) }
+      }
+    }
+  }
+  if ($Copies.Count -eq 0) {
+    Write-Host "No initialized copies of $HID found (project-local or home paths). Install with: scripts/install.ps1"
+    exit 0
+  }
+  Write-Host "Initialized copies of $HID :"
+  foreach ($c in $Copies) { Write-Host "  - $($c.Path)" }
+  if (-not $AssumeYes) {
+    $ans = Read-Host 'Update all listed copies to the canonical skill folder? [y/N]'
+    if ($ans -ne 'y' -and $ans -ne 'Y') { Write-Host 'Aborted. Nothing was updated.'; exit 0 }
+  }
+  foreach ($c in $Copies) {
+    Copy-Item -Path (Join-Path $SkillDir '*') -Destination $c.Path -Recurse -Force
+    Write-Host "  updated: $($c.Path)"
+  }
+  foreach ($H in $Harnesses) {
+    if ($H.s) {
+      $Sp = Join-Path $Root ($H.s -replace '/', '\')
+      if (Test-Path $Sp) {
+        $ref = if ($H.l) { Join-Path $Root (($H.l + '/' + $HID + '/SKILL.md') -replace '/', '\') } else { Join-Path $H.g ($HID + '/SKILL.md') }
+        if (Test-Path $ref) {
+          if ($AssumeYes -or (Confirm-Overwrite $Sp)) {
+            Write-Dispatcher -DestPath $Sp -SkillRef $ref
+            Write-Host "  dispatcher: $Sp"
+          }
+        }
+      }
+    }
+  }
+  Write-Host 'Done. Restart your harnesses if their installed skill or dispatcher is stale.'
+  exit 0
+}
+
+# --- mode: generate Kiro steering ---------------------------------------------
+
+if ($KiroSteering) {
+  if (-not $Target) { $Target = Read-Host 'Target repo path (blank = current dir)' }
+  if (-not $Target) { $Target = '.' }
+  $Root = (Resolve-Path $Target).Path
+  $AgentsMd = Join-Path $Root 'AGENTS.md'
+  if (-not (Test-Path $AgentsMd)) { Write-Error "No AGENTS.md at $Root — steering is written for an initialized repo."; exit 1 }
+
+  function Read-Section {
+    param([string]$Path, [string]$Header)
+    $lines = @() + (Get-Content $Path)
+    $start = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq $Header) { $start = $i; break } }
+    if ($start -lt 0) { return '' }
+    $out = New-Object System.Text.StringBuilder
+    for ($i = $start + 1; $i -lt $lines.Count; $i++) {
+      $n = $lines[$i]
+      if ($n -match '^## ' -or $n -eq '---') { break }
+      if ($n.Trim() -and -not ($n -match '^\s*<.*>\s*$') -and -not ($n -match '^<!--')) { [void]$out.Append($n + "`n") }
+    }
+    return $out.ToString().Trim()
+  }
+
+  $SteerDir = Join-Path $Root '.kiro\steering'
+  New-Item -ItemType Directory -Force -Path $SteerDir | Out-Null
+
+  $Project = Read-Section -Path $AgentsMd -Header '## Project'
+  if (-not $Project) { Write-Error "No '## Project' content in $AgentsMd."; exit 1 }
+  $Project = $Project -replace '\*\*', ''
+  Set-Content -Path (Join-Path $SteerDir 'product.md') -Encoding UTF8 -Value @"
+---
+inclusion: always
+---
+
+$Project
+"@
+  Write-Host "  steering: $(Join-Path $SteerDir 'product.md') — the project's concern, always-on."
+
+  $Siblings = Get-ChildItem $Root -Filter 'AGENTS.*.md' | Where-Object { $_.Name -notmatch '\.bak$' }
+  foreach ($S in $Siblings) {
+    $Topic = $S.BaseName.Substring('AGENTS.'.Length).ToLower()
+    $Port = Join-Path $SteerDir "$Topic.md"
+    if ((Test-Path $Port) -and -not (Select-String -LiteralPath $Port -Pattern '#\[\[file:AGENTS\.' -Quiet)) {
+      Write-Host "  skipped: $Port exists and is not a port file — not touched."
+      continue
+    }
+    $D = (Select-String -LiteralPath $S.FullName -Pattern '^description: "(.*)"$').Matches[0].Groups[1].Value
+    if ($Topic -eq 'worktrees') {
+      $Fm = "inclusion: fileMatch`nfileMatchPattern: `".worktrees/**`""
+    } else {
+      $Fm = "inclusion: auto`nname: `"$Topic rules`"`ndescription: `"$D`""
+    }
+    Set-Content -Path $Port -Encoding UTF8 -Value @"
+---
+$Fm
+---
+
+Load this project's $Topic rules before touching their domain. Why: they are binding for this repository.
+
+#[[file:AGENTS.$($S.BaseName.Substring('AGENTS.'.Length)).md]]
+"@
+    Write-Host "  steering: $Port → $($S.Name)"
+  }
+  Write-Host 'Done. Kiro picks up .kiro/steering/ automatically; nothing else was touched.'
+  exit 0
 }
 
 # --- list --------------------------------------------------------------------
