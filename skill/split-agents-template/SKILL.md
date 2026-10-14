@@ -26,7 +26,7 @@ Onboarding procedure for the `agents-template-schema` (schema 4). Flow: Detect �
 3. **Commands.** Map build / test / dev from `package.json` scripts, Cargo, `pyproject.toml` + pytest/Makefile, CI workflows, compose files. Prefer the most specific source. Confirm with the user.
 4. **Existing `AGENTS.md`.** Conformant (frontmatter integer schema key + `## Reader contract (minimal)` obligations in order) → offer *refresh in place* (default) or *archive and rewrite*. Legacy (HTML schema markers or missing key) → offer *archive and rewrite* with frontmatter migration (default: rewrite).
 5. **Kiro.** If `.kiro/` exists, set Kiro mode (Phase 3, step 5).
-6. **Skills and MCP.** Note installed skill dirs — they can signal adopted overlays. Read the MCP configs (`opencode.json`, `mcp.json`, `.claude/settings.json`, and the like) for existing servers — Phase 2 confirms them instead of re-asking.
+6. **Skills directories and initialized copies.** Note installed skill dirs — they can signal adopted overlays. Read the MCP configs (`opencode.json`, `mcp.json`, `.claude/settings.json`, and the like) for existing servers — Phase 2 confirms them instead of re-asking. Also glob the installer matrix's project-local and home paths for `split-agents-template/SKILL.md` copies already initialized — count and locations feed the re-run modes.
 
 ## Phase 2 — Interview
 
@@ -71,7 +71,11 @@ Ask only the gaps; group questions by the section they populate.
 
 ## Re-running
 
-Safe to re-run. Conformant file present → offer refresh in place (default). Non-conformant → archive and rewrite. A re-run picks up newly adopted workflows and overlays. Why: adoption is incremental; the file must follow the project.
+Safe to re-run and re-invocable on an already-initialized repo. After Phase 1, if an `AGENTS.md` exists, offer a mode (default: full refresh):
+
+- **Refresh / migrate** (default) — Conformant file present → offer refresh in place. Non-conformant → archive and rewrite. A re-run picks up newly adopted workflows and overlays, tooling answers, and sibling changes. Why: adoption is incremental; the file must follow the project.
+- **Update installed agents** — Sync every copy of this skill already initialized for the repo to the canonical `skill/split-agents-template/` folder: search the project-local skills and dispatcher paths from the installer matrix (`.claude`, `.codex`/`.agents`, `.cursor`, `.kiro`, `.agent`, `.hermes`, `.pi`, `.qoder`, `.rovodev`, `.trae`, `.trae-cn`, `.vibe`, `.dsh`, ...), plus the matching home paths. Report each found copy; after confirmation, copy verbatim and regenerate its thin dispatcher. Nothing found → point the user at `scripts/install.sh` / `scripts/install.ps1`. This mode touches only installed copies — never `AGENTS.md`, never steering.
+- **Generate Kiro steering** — Offered when `.kiro/` exists: run Phase 3 step 5 against the existing `AGENTS.md` and its earned siblings — write `product.md` from the file's Project identity, and one port file per sibling (inclusion mode suited to its domain, body referencing `#[[file:AGENTS.<TOPIC>.md]]`). Idempotent: existing steering files are updated in place, not archived; no port file is created for a sibling that does not exist. This mode touches only `.kiro/steering/`.
 
 ## Outputs
 
